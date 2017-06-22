@@ -2,7 +2,7 @@ import subprocess
 import time
 import sys
 import re
-import os
+import os, codecs
 
 """Use android debugger to dial phones and hang them up.
     This is for saving some time in the device testing process.
@@ -21,6 +21,7 @@ class Dialer(object):
         self.repetitions = reps
         self.duration = duration
         self.callers = callers
+        self.log_fn = os.path.join(os.getcwd(), "logcat.txt")
 
     def devicelist(self):
         """ return a list of device codes for the usb-plugged-in devices
@@ -66,9 +67,13 @@ class Dialer(object):
             sys.stdout.flush()
             time.sleep(1)
 
-    def operate_callee(self, seconds_to_go):
+    def operate_callee(self, id, seconds_to_go):
         """ check the phone to see if it should answer """
         call_keeps_going = True
+        print("opening logfile")
+        with open(self.log_fn, "w") as logfob:
+            logfob.write(subprocess.run(['adb', '-s {}'.format(id), 'wait-for-device', 'logcat', 'InCall:I', '*:S']))
+        print("logfile closed")
         # check status for active call
         # if not active call check for incoming call
         # if incoming call, answer
@@ -76,6 +81,9 @@ class Dialer(object):
         return call_keeps_going
 
     def call(self):
+        """ needs to log results 1) 20 second no pickup 2) successful call-pickup-listen-hangup
+        3) failure to ring  --  bonus! record gps of failure!
+        $ adb shell dumpsys <service> """
         if self.callers is None:
             self.callers = self.assign_callers()
         for caller in self.callers:
@@ -93,14 +101,16 @@ class Dialer(object):
                         sys.stdout.write("\r")
                         sys.stdout.write("{:2d}".format(i))
                         sys.stdout.flush()
+                        # if
                         time.sleep(1)
-                        if not operate_callee(i):
+                        if not self.operate_callee(callee, i):
                             break
+                    self.teardown_call([caller, callee])
         print("Finished the call list!")
 
 
 def dumpty():
-    """ for parsing this dang logcat file """
+    """ for parsing this dang logcat file generated with 'adb logcat > adblogcat.txt' """
     with codecs.open("C:\\Users\\2053_HSUF\\Desktop\\adblogcat.txt", 'rU', 'utf-16') as fob:
         for linenum, line in enumerate(fob.readlines()):
             parts = line.strip().split(":")
@@ -113,5 +123,5 @@ def dumpty():
 # main
 if __name__ == "__main__":
     dialup = Dialer()
-    # dialup.obtain_number()
-    # dialup.call()
+    dialup.obtain_number()
+    dialup.call()
