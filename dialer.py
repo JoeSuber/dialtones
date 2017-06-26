@@ -2,26 +2,30 @@ import subprocess
 import time
 import sys
 import re
-import os, codecs
+import os
 
 """Use android debugger to dial phones and hang them up.
     This is for saving some time in the device testing process.
     (assumes android debugger is available) 
-
+    
+    https://forum.xda-developers.com/showthread.php?t=2141817
     http://www.linuxtopia.org/online_books/android/devguide/guide/developing/tools/android_adb_commandsummary.html
+    
+    "%23" == "#" in strings
     """
-
 
 class Dialer(object):
     """ init with quantity of dial tests and duration of call"""
 
-    def __init__(self, reps=10, duration=35, callers=None):
+    def __init__(self, reps=10, duration=35, timeout=20, callers=None, logbook=None):
         self.devices = self.devicelist()
         self.phonebook = dict()
         self.repetitions = reps
         self.duration = duration
+        self.timeout = timeout
         self.callers = callers
-        self.log_fn = os.path.join(os.getcwd(), "logcat.txt")
+        self.log_fn = logbook or os.path.join(os.getcwd(), "logbook.txt")
+        self.current_caller = None
 
     def devicelist(self):
         """ return a list of device codes for the usb-plugged-in devices
@@ -54,7 +58,7 @@ class Dialer(object):
                 return [device]
         return self.phonebook.keys()
 
-    def teardown_call(self, hangups, wait=5):
+    def teardown_call(self, hangups, wait=6):
         """ hangups is a list of serial-ids to send the hangup message to via adb  """
         if type(hangups) is not list:
             hangups = list((hangups,))
@@ -66,22 +70,12 @@ class Dialer(object):
             sys.stdout.write("Call teardown:{:2d}".format(j))
             sys.stdout.flush()
             time.sleep(1)
-
-    def operate_callee(self, id, seconds_to_go):
-        """ check the phone to see if it should answer """
-        call_keeps_going = True
-        print("opening logfile")
-        with open(self.log_fn, "w") as logfob:
-            logfob.write(subprocess.run(['adb', '-s {}'.format(id), 'wait-for-device', 'logcat', 'InCall:I', '*:S']))
-        print("logfile closed")
-        # check status for active call
-        # if not active call check for incoming call
-        # if incoming call, answer
-        # if active call, check seconds_to_go
-        return call_keeps_going
+        print(" fin ")
 
     def call(self):
-        """ needs to log results 1) 20 second no pickup 2) successful call-pickup-listen-hangup
+        """ needs to log results
+        1) 20 second no pickup
+        2) successful call-pickup-listen-hangup
         3) failure to ring  --  bonus! record gps of failure!
         $ adb shell dumpsys <service> """
         if self.callers is None:
@@ -93,32 +87,39 @@ class Dialer(object):
                 countdown = self.repetitions
                 while countdown:
                     countdown -= 1
-                    print('Begin call {}  to device {}'.format(self.repetitions - countdown, callee))
+                    print('*** Begin call {}  to device {} ***'.format(self.repetitions - countdown, callee))
                     subprocess.call(
                         'adb -s {} wait-for-device shell am start -a android.intent.action.CALL -d tel:{}'.format(
                             caller, phone_number), shell=True)
+                    self.call_found, self.call_answered = False, False
                     for i in range(self.duration, 0, -1):  # caller will maintain call for duration
                         sys.stdout.write("\r")
                         sys.stdout.write("{:2d}".format(i))
                         sys.stdout.flush()
-                        # if
                         time.sleep(1)
-                        if not self.operate_callee(callee, i):
-                            break
+                        if not self.call_found:
+                            self.call_found = self.lookforcall(callee)
+                            if i < (self.duration - self.timeout):
+                                print(" Call Timeout expired! device {} failed to call {}".format(caller, callee))
+                        if self.call_found and (not self.call_answered):
+                            self.answer_call(callee)
+                            self.call_answered = True
+
                     self.teardown_call([caller, callee])
         print("Finished the call list!")
 
+    def lookforcall(self, device):
+        cmds = ['adb', '-s', '{}'.format(device), 'wait-for-device', 'shell', 'dumpsys', 'telephony.registry']
+        blather = subprocess.run(cmds, stdout=subprocess.PIPE).stdout.decode("utf-8")
+        incoming = [i for i in blather.split(os.linesep) if 'mCallIncomingNumber' in i][0].split('=')
+        if len(incoming[1]) > 6:
+            print("  incoming on {} device: {}".format(device, incoming))
+            return incoming[1]
+        return False
 
-def dumpty():
-    """ for parsing this dang logcat file generated with 'adb logcat > adblogcat.txt' """
-    with codecs.open("C:\\Users\\2053_HSUF\\Desktop\\adblogcat.txt", 'rU', 'utf-16') as fob:
-        for linenum, line in enumerate(fob.readlines()):
-            parts = line.strip().split(":")
-            try:
-                print(linenum, " : ", parts[2].split(' ')[-1])
-            except:
-                print("badline_____________________")
-
+    def answer_call(self, device):
+        subprocess.call('adb -s {} wait-for-device shell input keyevent KEYCODE_CALL'.format(device), shell=True)
+        print(" device {} answers".format(device))
 
 # main
 if __name__ == "__main__":
