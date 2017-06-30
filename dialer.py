@@ -17,8 +17,9 @@ import os
 class Dialer(object):
     """ init with quantity of dial tests and duration of call"""
 
-    def __init__(self, reps=10, duration=35, timeout=20, callers=None, logbook=None):
+    def __init__(self, reps=10, duration=35, timeout=20, wait=10, callers=None, logbook=None):
         self.devices = self.devicelist()
+        self.wait = wait
         self.phonebook = dict()
         self.repetitions = reps
         self.duration = duration
@@ -58,8 +59,10 @@ class Dialer(object):
                 return [device]
         return self.phonebook.keys()
 
-    def teardown_call(self, hangups, wait=6):
+    def teardown_call(self, hangups, wait=None):
         """ hangups is a list of serial-ids to send the hangup message to via adb  """
+        if wait is None:
+            wait = self.wait
         if type(hangups) is not list:
             hangups = list((hangups,))
         sys.stdout.write("\r")
