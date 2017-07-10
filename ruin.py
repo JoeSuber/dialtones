@@ -27,7 +27,8 @@ def ruin(stake=stake, target=target, bet=bet):
         if stake > original_stake:
             wins += 1
         stake = original_stake
-    print("{}/{} wins of greater than ${} (at {} payout ratio)".format(wins, trials, target, rate_of_return))
+    print("{}/{} ({:d2}) wins of greater than ${} (at {} payout ratio)"
+          .format(wins, trials, wins/float(trials), target, rate_of_return))
 
 
 if __name__ == "__main__":
