@@ -30,8 +30,8 @@ def ruin(stake=stake, target=target, bet=bet, trials=trials, payout=rate_of_retu
             wins += 1
         stake = original_stake
     promo = promo / float(trials)
-    print("{:.2f}%  wins going from ${} to ${} with bets of {}   ({:.2f} payout, {} avg. promo bucks)"
-          .format(100*(wins/float(trials)), stake, target, bet, payout, rate_of_return, promo))
+    print("{:.2f}%  wins going from ${} to ${} with bets of {}   ({:.3f} payout, ${:.2f} avg. promo bucks)"
+          .format(100*(wins/float(trials)), stake, target, bet, payout, promo))
 
 stakes = [300, 500]
 targets = [550, 650, 750, 1000, 2000]
