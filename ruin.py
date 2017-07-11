@@ -66,9 +66,9 @@ def ruin(stake=stake, target=target, bet=bet, trials=trials):
           .format(100*(wins/float(trials)), stake, target, bet, promo_avg, time_spent, promo_min, promo_max))
 
 
-stakes = [200, 400]
+stakes = [260, 350]
 targets = [450, 550, 750, 1000, 2000]
-bets = [5, 15, 25, 75]
+bets = [1, 5, 15, 25]
 
 def bigone():
     for stake in stakes:
