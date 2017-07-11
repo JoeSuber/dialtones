@@ -1,5 +1,8 @@
 import sys
 from random import randint
+from datetime import timedelta
+from collections import OrderedDict
+
 
 try:
     stake, target, bet, rate_of_return = sys.argv[1:]
@@ -10,41 +13,66 @@ except:
     rate_of_return = 0.98
 
 
-trials = 10000
+trials = 2000
+seconds_per_hand = 8
 
-
-def game(bet, rate_of_return=rate_of_return):
+def game1(bet, rate_of_return=rate_of_return):
     return (bet + bet*rate_of_return) * randint(0,1)
 
+""" paytable and odds from https://wizardofodds.com/games/video-poker/tables/jacks-or-better/
+    Jacks or better, '9-5' style """
 
-def ruin(stake=stake, target=target, bet=bet, trials=trials, payout=rate_of_return):
+paytable = OrderedDict([(10862898027756, 0), (4288342040640, 1), (2577431192796, 2),(1484332642620, 3),
+                        (223861063908, 4), (217120426644, 5),(229510637676, 9),(47100799404, 25),  (2137447980, 50),
+                        (496237776, 800)])
+
+possibles = sum(paytable.keys())
+
+def game(bet, possibles=possibles, paytable=paytable):
+    """ play video poker or some other game according to a pre-determined paytable odds chart"""
+    spin = randint(0, possibles)
+    cumulate = 0
+    for k in paytable:
+        cumulate += k
+        if spin < cumulate: break
+    return bet * paytable[k]
+
+
+def ruin(stake=stake, target=target, bet=bet, trials=trials):
+    """ play the game starting with a 'stake' and quitting when reaching the 'target' or losing so much that
+     another full bet cannot be made. 'bet' the same amount during all 'trial'
+     Report the dollar turnover and win percentage"""
     original_stake = stake
     wins = 0
-    promo = 0
+    promo_history = []
     for t in range(trials):
+        promo = 0
         while ((stake - bet) > 0) and (stake < target):
             promo += bet
             stake -= bet
             stake += game(bet)
-        if stake > original_stake:
+        if stake > original_stake: # if above ended ahead, its a win!
             wins += 1
+        promo_history.append(promo)
         stake = original_stake
-    promo = promo / float(trials)
-    print("{:.2f}%  wins going from ${} to ${} with bets of {}   ({:.3f} payout, ${:.2f} avg. promo bucks)"
-          .format(100*(wins/float(trials)), stake, target, bet, payout, promo))
+    promo_avg = sum(promo_history) / float(trials)
+    promo_max = max(promo_history)
+    promo_min = min(promo_history)
+    hands_played = int(promo / bet)
+    time_spent = str(timedelta(seconds=(hands_played * seconds_per_hand)))
+    print("win {:.2f}%  risk ${} to get ${} @ ${} / bet  -- avg promo: ${:.2f} in {} ... min:${:.2f}, max ${:.2f}"
+          .format(100*(wins/float(trials)), stake, target, bet, promo_avg, time_spent, promo_min, promo_max))
 
-stakes = [300, 500]
-targets = [550, 650, 750, 1000, 2000]
+stakes = [200, 400]
+targets = [450, 550, 750, 1000, 2000]
 bets = [5, 15, 25, 75]
-payouts = [0.985, 0.995]
 
 
 def bigone():
     for stake in stakes:
         for target in targets:
             for bet in bets:
-                for payout in payouts:
-                    ruin(stake=stake, target=target, bet=bet, trials=trials, payout=payout)
+                ruin(stake=stake, target=target, bet=bet, trials=trials)
 
 
 if __name__ == "__main__":
