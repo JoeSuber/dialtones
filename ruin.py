@@ -3,6 +3,8 @@ from random import randint
 from datetime import timedelta
 from collections import OrderedDict
 
+""" the real purpose of this is to explore some data visualization and practice.
+    A nice side-effect is exploring the reality of playing video poker."""
 
 try:
     stake, target, bet, rate_of_return = sys.argv[1:]
@@ -11,7 +13,6 @@ except:
     target = 600
     bet = 15
     rate_of_return = 0.98
-
 
 trials = 2000
 seconds_per_hand = 8
@@ -29,7 +30,8 @@ paytable = OrderedDict([(10862898027756, 0), (4288342040640, 1), (2577431192796,
 possibles = sum(paytable.keys())
 
 def game(bet, possibles=possibles, paytable=paytable):
-    """ play video poker or some other game according to a pre-determined paytable odds chart"""
+    """ play video poker or some other game according to a pre-determined paytable odds chart
+        that is ordered from most-to-least likely outcomes"""
     spin = randint(0, possibles)
     cumulate = 0
     for k in paytable:
@@ -60,13 +62,13 @@ def ruin(stake=stake, target=target, bet=bet, trials=trials):
     promo_min = min(promo_history)
     hands_played = int(promo / bet)
     time_spent = str(timedelta(seconds=(hands_played * seconds_per_hand)))
-    print("win {:.2f}%  risk ${} to get ${} @ ${} / bet  -- avg promo: ${:.2f} in {} ... min:${:.2f}, max ${:.2f}"
+    print("win {:.2f}%  risk ${} to get ${} @ ${} / bet  -- avg rollover: ${:.2f} in {} ... min:${:.2f}, max ${:.2f}"
           .format(100*(wins/float(trials)), stake, target, bet, promo_avg, time_spent, promo_min, promo_max))
+
 
 stakes = [200, 400]
 targets = [450, 550, 750, 1000, 2000]
 bets = [5, 15, 25, 75]
-
 
 def bigone():
     for stake in stakes:
@@ -76,4 +78,5 @@ def bigone():
 
 
 if __name__ == "__main__":
+    print(" *** If playing perfect video poker until ruination or a target goal: ***")
     bigone()
