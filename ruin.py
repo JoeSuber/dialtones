@@ -60,7 +60,7 @@ def ruin(stake=stake, target=target, bet=bet, trials=trials):
     promo_avg = sum(promo_history) / float(trials)
     promo_max = max(promo_history)
     promo_min = min(promo_history)
-    hands_played = int(promo / bet)
+    hands_played = int(promo_avg / bet)
     time_spent = str(timedelta(seconds=(hands_played * seconds_per_hand)))
     print("win {:.2f}%  risk ${} to get ${} @ ${} / bet  -- avg rollover: ${:.2f} in {} ... min:${:.2f}, max ${:.2f}"
           .format(100*(wins/float(trials)), stake, target, bet, promo_avg, time_spent, promo_min, promo_max))
