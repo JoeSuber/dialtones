@@ -37,7 +37,7 @@ def game(bet, possibles=possibles, paytable=paytable):
     for k in paytable:
         cumulate += k
         if spin < cumulate: break
-    return bet * paytable[k]
+    return bet * paytable[k], 1 if paytable[k] >= 800 else 0
 
 
 def ruin(stake=stake, target=target, bet=bet, trials=trials):
@@ -47,12 +47,14 @@ def ruin(stake=stake, target=target, bet=bet, trials=trials):
     original_stake = stake
     wins = 0
     promo_history = []
+    jackpots = 0
     for t in range(trials):
         promo = 0
         while ((stake - bet) > 0) and (stake < target):
+            winnings, jackpot = game(bet)
             promo += bet
-            stake -= bet
-            stake += game(bet)
+            stake += (winnings - bet)
+            jackpots += jackpot
         if stake > original_stake: # if above ended ahead, its a win!
             wins += 1
         promo_history.append(promo)
@@ -62,21 +64,21 @@ def ruin(stake=stake, target=target, bet=bet, trials=trials):
     promo_min = min(promo_history)
     hands_played = int(promo_avg / bet)
     time_spent = str(timedelta(seconds=(hands_played * seconds_per_hand)))
-    print("win {:.2f}%  risk ${} to get ${} @ ${} / bet  -- avg rollover: ${:.2f} in {} ... min:${:.2f}, max ${:.2f}"
-          .format(100*(wins/float(trials)), stake, target, bet, promo_avg, time_spent, promo_min, promo_max))
+    print("win {:.2f}%  risk ${} to get ${} @ ${} / bet, avg rollover: ${:.2f} in {}  min:${:.2f}, max ${:.2f} jackpots: {}"
+          .format(100*(wins/float(trials)), stake, target, bet, promo_avg, time_spent, promo_min, promo_max, jackpots))
 
 
-stakes = [260, 350]
-targets = [450, 550, 750, 1000, 2000]
-bets = [1, 5, 15, 25]
+stakes = [260, 350, 500]
+targets = [450, 550, 750, 1000, 5000]
+bets = [5, 15, 25, 50]
 
 def bigone():
-    for stake in stakes:
-        for target in targets:
-            for bet in bets:
+    for bet in bets:
+        for stake in stakes:
+            for target in targets:
                 ruin(stake=stake, target=target, bet=bet, trials=trials)
 
 
 if __name__ == "__main__":
-    print(" *** If playing perfect video poker until ruination or a target goal: ***")
+    print(" *** If playing perfect video poker until ruination or a target goal ({} trials): ***".format(trials))
     bigone()
