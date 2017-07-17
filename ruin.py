@@ -18,6 +18,7 @@ trials = 2000
 seconds_per_hand = 8
 
 def game1(bet, rate_of_return=rate_of_return):
+    """ a generic fictional game that can approximate the long-term rate of return for any casino game """
     return (bet + bet*rate_of_return) * randint(0,1)
 
 """ paytable and odds from https://wizardofodds.com/games/video-poker/tables/jacks-or-better/
@@ -31,7 +32,7 @@ possibles = sum(paytable.keys())
 
 def game(bet, possibles=possibles, paytable=paytable):
     """ play video poker or some other game according to a pre-determined paytable odds chart
-        that is ordered from most-to-least likely outcomes"""
+        that is ordered from the most-to-least likely outcomes"""
     spin = randint(0, possibles)
     cumulate = 0
     for k in paytable:
