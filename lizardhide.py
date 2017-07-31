@@ -1,64 +1,33 @@
-""" automate chameleon and hidden menu device tests. """
-import dialer as dial
+""" automate chameleon and hidden menu device tests.
 
-phones = dial.Dialer()
+psuedo:
 
-dialCodes = { \
-    'All': [ \
-        ['1', '#611'], \
-        ['211', 'Community'], \
-        ['311', 'Non-emergency'], \
-        ['411', 'Directory'], \
-        ['511', 'Traffic'], \
-        ['611', 'Self-Service'], \
-        ['711', 'Relay'], \
-        ['811', 'Before'] \
-        ], \
-    'Sprint-Prepaid': [ \
-        ['*3', '#611'], \
-        ['611', '#311'], \
-        ['#411', '#123'], \
-        ['411', '#123'], \
-        ['#611', '#123'], \
-        ['*611', '#123'], \
-        ['*411', '#123'], \
-        ['*2', '#123'] \
-        ], \
-    'Sprint-PCS': [ \
-        ['*2', '#611'], \
-        ['*3', '#311'], \
-        ['*4', '#123'], \
-        ['0', '#123'], \
-        ], \
-    'Boost mobile': [ \
-        ['888667848', '#611'], \
-        ['1888667848', '#311'], \
-        # ['*411','Directory'],\
-        # ['#411','Directory'],\
-        ['#611', 'Self-Service'], \
-        ['*611', 'Self-Service'], \
-        ['*225', 'Balance'], \
-        ['#225', 'Balance'], \
-        # ['*233','Reboost'],\
-        # ['#233','Reboost'],\
-        ['611', 'Self-Service'], \
-        ['411', 'Directory'] \
-        ], \
-    'VirginMobile': [ \
-        ['*23', '#611'], \
-        ['*86', '#311'], \
-        ['18883221122', '#123'], \
-        ['#411', '#123'], \
-        ['*411', '#123'], \
-        ['*611', '#123'], \
-        ['#611', '#123'], \
-        ['611', '#123'], \
-        ['#0000000868', '#123'], \
-        ['*729', '#123'], \
-        ['411', '#123'] \
-        ], \
-    'tsp': [ \
-        ['*611', '*611'], \
-        ['#611', '#611'], \
-        ['611', '611'], \
-        ]}
+- setup -
+detect devices
+for each device detect carrier
+based on carrier, use chamcodes to assign appropriate testing regime to each device
+check each device for apk installation
+if needed, locate local apk and install to device
+    find local apk filename
+create local screenshot directory
+create local test-results directory
+create and assign filenames for each test result and screenshot
+
+- begin testing -
+dial the test
+wait for connect (or timeout)
+check response
+record apk response
+take screenshot
+
+-- parse results --
+"""
+
+
+
+from chamcodes import dial_codes
+
+if __name__ == "__main__":
+    print(dial_codes['All'])
+
+
