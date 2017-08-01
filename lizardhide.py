@@ -21,11 +21,13 @@ record apk response
 take screenshot
 
 -- parse results --
+43e1cef8
 """
 import subprocess
 import time
 import sys
 import os
+import glob
 from chamcodes import dial_codes
 
 
@@ -48,8 +50,11 @@ class Adb(object):
         print(local_path)
         if os.path.exists(local_path):
             return ['adb', '-s', '{}'.format(self.device), 'install', '-r', '{}'.format(local_path)]
-        print("WARNING! not a path: {}".format(local_path))
+        print("WARNING! not a valid path: {}".format(local_path))
         return []
+
+    def getprop(self):
+        return self.start + ["getprop"]
 
 
 def devicelist():
@@ -59,22 +64,16 @@ def devicelist():
     return [entry.split('\t')[0] for entry in raw if "\t" in entry]
 
 
-def carrier_detect():
-    devices = devicelist()
-    # check service state
-    for num, device in enumerate(devices):
-        cmds = Adb(device)
-        path = os.path.join('C:/', 'Users', '2053_HSUF', 'Desktop', 'SprintAdminTest.apk')
-        print("#{:3}            *********************  {}  **********************".format(num + 1, device))
-        raw = subprocess.run(cmds.uri(), stdout=subprocess.PIPE).stdout.decode("utf-8").split(os.linesep)
-        #entry = [blurb for blurb in raw if "network" in blurb.lower()]
-        entry = raw
-        for e in entry:
-            if e:
-                print(e)
+def ask(cmd_str):
+    """ run an adb command string and return the terminal text output """
+    return subprocess.run(cmd_str, stdout=subprocess.PIPE).stdout.decode("utf-8").split(os.linesep)
 
 
 if __name__ == "__main__":
-    carrier_detect()
-
-
+    path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
+    cmds = [Adb(device) for device in devicelist()]
+    for num, cmd in enumerate(cmds):
+        print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
+        junk = ask(cmd.getprop())
+        print([j for j in junk if 'gsm.operator.numeric' in j])
+#
