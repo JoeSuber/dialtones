@@ -17,11 +17,12 @@ create and assign filenames for each test result and screenshot
 dial the test
 wait for connect (or timeout)
 check response
-record apk response
 take screenshot
 
 -- parse results --
-43e1cef8
+
+http://adbshell.com/commands
+
 """
 import subprocess
 import time
@@ -32,10 +33,12 @@ from chamcodes import dial_codes
 
 
 class Adb(object):
-    """ return properly formatted command strings for subprocess to call """
+    """ return properly formatted command strings for subprocess to call.
+        Instances provide a place to stick the unique data for each device"""
     def __init__(self, device):
         self.device = device
         self.start = ['adb', '-s', '{}'.format(device), 'wait-for-device', 'shell']
+        self.alpha = None
 
     def android_id(self):
         return self.start + ['content', 'query' ' --uri', '\"content://settings/secure/android_id\"', '--projection', 'value']
@@ -75,5 +78,6 @@ if __name__ == "__main__":
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         junk = ask(cmd.getprop())
-        print([j for j in junk if 'gsm.operator.numeric' in j])
+        cmd.alpha = [j for j in junk if 'ro.home.operator' in j]
+        print(cmd.alpha)
 #
