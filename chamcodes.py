@@ -59,3 +59,9 @@ dial_codes = {
         ]}
 
 
+carriers = {'Sprint-Prepaid': ["SPRPRE"],
+            'Sprint-PCS': ["SPRINT"],
+            'Boost mobile': ['BOOST'],
+            'VirginMobile': ['849', 'VMU'],
+            'tsp': ['Chameleon']
+            }

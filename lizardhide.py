@@ -29,25 +29,32 @@ import time
 import sys
 import os
 import glob
-from chamcodes import dial_codes
+from chamcodes import dial_codes, carriers
 
 
 class Adb(object):
-    """ return properly formatted command strings for subprocess to call.
+    """ return properly formatted command strings for subprocess to call when multiple devices are hooked up.
         Instances provide a place to stick the unique data for each device"""
     def __init__(self, device):
         self.device = device
-        self.start = ['adb', '-s', '{}'.format(device), 'wait-for-device', 'shell']
+        self.shell = ['adb', '-s', '{}'.format(device), 'wait-for-device', 'shell']
         self.alpha = None
+        self.testplan = None
 
     def android_id(self):
-        return self.start + ['content', 'query' ' --uri', '\"content://settings/secure/android_id\"', '--projection', 'value']
+        return self.shell + ['content', 'query' ' --uri', '\"content://settings/secure/android_id\"', '--projection', 'value']
 
     def tel_reg(self):
-        return self.start + ['dumpsys', 'telephony.registry']
+        return self.shell + ['dumpsys', 'telephony.registry']
 
     def uri(self):
-        return self.start + ['content', 'query' ' --uri', '\"content://settings/system/\"']
+        return self.shell + ['content', 'query' ' --uri', '\"content://settings/system/\"']
+
+    def getprop(self):
+        return self.shell + ["getprop"]
+
+    def screenshot(self):
+        return self.shell + [""]
 
     def install(self, local_path):
         print(local_path)
@@ -55,9 +62,6 @@ class Adb(object):
             return ['adb', '-s', '{}'.format(self.device), 'install', '-r', '{}'.format(local_path)]
         print("WARNING! not a valid path: {}".format(local_path))
         return []
-
-    def getprop(self):
-        return self.start + ["getprop"]
 
 
 def devicelist():
@@ -68,8 +72,19 @@ def devicelist():
 
 
 def ask(cmd_str):
-    """ run an adb command string and return the terminal text output """
+    """ run an adb command string, return the terminal text output """
     return subprocess.run(cmd_str, stdout=subprocess.PIPE).stdout.decode("utf-8").split(os.linesep)
+
+
+def assign_carrier(clue):
+    """ string search to map the correct testplan key to a device's clue-string """
+    clue = clue.lower()
+    for k in carriers:
+        for matcher in carriers[k]:
+            if matcher.lower() in clue:
+                return k
+    print("No good guess for {}".format(clue))
+    return ""
 
 
 if __name__ == "__main__":
@@ -77,7 +92,8 @@ if __name__ == "__main__":
     cmds = [Adb(device) for device in devicelist()]
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
-        junk = ask(cmd.getprop())
-        cmd.alpha = [j for j in junk if 'ro.home.operator' in j]
+        cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop()) if 'ro.home.operator' in j]
+        if not cmd.alpha:
+            continue
         print(cmd.alpha)
-#
+        cmd.testplan = dial_codes['All'] + dial_codes[cmd.alpha]
