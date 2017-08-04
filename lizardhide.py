@@ -44,6 +44,13 @@ class Adb(object):
         self.testplan = None
         self.pic_paths = {}
         self.gen = ()
+        self.current_code = ""
+        self.time_on = 0    # zero will turn on the execution of commands
+        self.delay = 10      # seconds
+        self.finished = False
+        self.outputdir = os.path.join(os.getcwd(), "pics")
+        if not os.path.exists(self.outputdir):
+            os.mkdir(self.outputdir)
 
     def android_id(self):
         return self.shell + ['content', 'query' ' --uri', '\"content://settings/secure/android_id\"', '--projection', 'value']
@@ -57,15 +64,23 @@ class Adb(object):
     def getprop(self):
         return self.shell + ["getprop"]
 
+    def hangup(self):
+        return self.shell + ["input", "keyevent", "KEYCODE_ENDCALL"]
+
     def screenshot(self, test, sd_path):
         self.pic_paths[test] = sd_path
-        return self.shell + ["screencap", sd_path]
+        return self.shell + ["screencap", "/sdcard/" + self.pic_paths[test]]
 
     def download(self, path):
-        return self.pull + [path]
+        return self.pull + ["/sdcard/" + path, self.outputdir]
 
     def dial(self, code):
         return self.shell + ["am", "start", "-a", "android.intent.action.CALL", "-d", "tel:{}".format(code)]
+
+    def enter_key(self, code=None):
+        if code is None:
+            code = '66'
+        return self.shell + ["input", "keyevent", str(code)]
 
     def install(self, local_path):
         print(local_path)
@@ -97,11 +112,8 @@ def assign_carrier(clue):
     print("No good guess for {}".format(clue))
     return ""
 
-
-if __name__ == "__main__":
-    """ initialize devices and assign test plans """
-    path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
-    sd_path = "/sdcard/screen.png"
+def init_devices():
+    """ initialize plugged-in devices and assign test plans """
     cmds = [Adb(device) for device in devicelist()]
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
@@ -112,29 +124,46 @@ if __name__ == "__main__":
         print(cmd.alpha[0])
         cmd.testplan = dial_codes['All'] + dial_codes[cmd.alpha[0]]
         cmd.pic_paths = {k: cmd.alpha[0].replace(" ", '') + "_" + str(k[0]) + "_scrn.png" for k in cmd.testplan}
-        cmd.gen = (c[0] for c in cmd.testplan)
+        cmd.gen = (c for c in cmd.testplan)
+    return cmds
 
-    """ run test-plan """
+if __name__ == "__main__":
+    cmds = init_devices()
+    path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
+
+    """ run test-plans """
     while True:
         devices_finished = 0
+        # activate the next command
         for num, cmd in enumerate(cmds):
             if cmd.gen:
                 try:
-                    code = cmd.gen.__next__()
-                    print("{}: {} ".format(cmd.device, code))
-                    ask(cmd.dial(code))
+                    if not cmd.time_on:
+                        cmd.current_code = cmd.gen.__next__()
+                        print("{}: {} ".format(cmd.device, cmd.current_code))
+                        ask(cmd.dial(cmd.current_code[0]))
+                        cmd.time_on = time.time()
 
                 except Exception as e:
-                    print("device {} is done".format(cmd.device))
+                    print("device {} {} is done".format(cmd.device, cmd.alpha))
                     print(e)
+                    cmd.finished = True
                     devices_finished +=1
             else:
                 devices_finished += 1
 
-        ## short delay
-        ## screen shots
-        ## call teardowns
-        ## error notation
+        # use the timer to activate screen shot, download it, and then tear down call
+        for num, cmd in enumerate(cmds):
+            if cmd.gen and (not cmd.finished):
+                current_wait = time.time() - cmd.time_on
+                if current_wait > cmd.delay:
+                    print("tearing down {} cmd: {} pic: {}"
+                          .format(cmd.device, cmd.current_code, cmd.pic_paths[cmd.current_code]))
+                    ask(cmd.screenshot(cmd.current_code, cmd.pic_paths[cmd.current_code], ))
+                    ask(cmd.download(cmd.pic_paths[cmd.current_code]))
+                    ask(cmd.hangup())
+                    cmd.time_on = 0
+
 
         if devices_finished >= num:
             print(" ****   all done!  ****")
