@@ -33,13 +33,17 @@ from chamcodes import dial_codes, carriers
 
 
 class Adb(object):
-    """ return properly formatted command strings for subprocess to call when multiple devices are hooked up.
+    """ return properly formatted 'adb' command strings for subprocess to call when multiple devices are hooked up.
         Instances provide a place to stick the unique data for each device"""
     def __init__(self, device):
         self.device = device
-        self.shell = ['adb', '-s', '{}'.format(device), 'wait-for-device', 'shell']
+        self.boiler_plate = ['adb', '-s', '{}'.format(device), 'wait-for-device']
+        self.shell = self.boiler_plate + ['shell']
+        self.pull = self.boiler_plate + ['pull']
         self.alpha = None
         self.testplan = None
+        self.pic_paths = {}
+        self.gen = ()
 
     def android_id(self):
         return self.shell + ['content', 'query' ' --uri', '\"content://settings/secure/android_id\"', '--projection', 'value']
@@ -53,8 +57,15 @@ class Adb(object):
     def getprop(self):
         return self.shell + ["getprop"]
 
-    def screenshot(self):
-        return self.shell + [""]
+    def screenshot(self, test, sd_path):
+        self.pic_paths[test] = sd_path
+        return self.shell + ["screencap", sd_path]
+
+    def download(self, path):
+        return self.pull + [path]
+
+    def dial(self, code):
+        return self.shell + ["am", "start", "-a", "android.intent.action.CALL", "-d", "tel:{}".format(code)]
 
     def install(self, local_path):
         print(local_path)
@@ -64,16 +75,16 @@ class Adb(object):
         return []
 
 
-def devicelist():
-    """ return a list of device codes for the usb-plugged-in devices
-     in the order they are given by calling 'adb devices' """
-    raw = subprocess.run(["adb", "devices"], stdout=subprocess.PIPE).stdout.decode("utf-8").split(os.linesep)[1:]
-    return [entry.split('\t')[0] for entry in raw if "\t" in entry]
-
-
 def ask(cmd_str):
     """ run an adb command string, return the terminal text output """
     return subprocess.run(cmd_str, stdout=subprocess.PIPE).stdout.decode("utf-8").split(os.linesep)
+
+
+def devicelist():
+    """ return a list of device codes for the usb-plugged-in devices
+     in the order they are given by calling 'adb devices' """
+    raw = ask(["adb", "devices"])[1:]
+    return [entry.split('\t')[0] for entry in raw if "\t" in entry]
 
 
 def assign_carrier(clue):
@@ -88,12 +99,45 @@ def assign_carrier(clue):
 
 
 if __name__ == "__main__":
+    """ initialize devices and assign test plans """
     path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
+    sd_path = "/sdcard/screen.png"
     cmds = [Adb(device) for device in devicelist()]
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop()) if 'ro.home.operator' in j]
         if not cmd.alpha:
+            print("-- no recognized carrier --")
             continue
-        print(cmd.alpha)
-        cmd.testplan = dial_codes['All'] + dial_codes[cmd.alpha]
+        print(cmd.alpha[0])
+        cmd.testplan = dial_codes['All'] + dial_codes[cmd.alpha[0]]
+        cmd.pic_paths = {k: cmd.alpha[0].replace(" ", '') + "_" + str(k[0]) + "_scrn.png" for k in cmd.testplan}
+        cmd.gen = (c[0] for c in cmd.testplan)
+
+    """ run test-plan """
+    while True:
+        devices_finished = 0
+        for num, cmd in enumerate(cmds):
+            if cmd.gen:
+                try:
+                    code = cmd.gen.__next__()
+                    print("{}: {} ".format(cmd.device, code))
+                    ask(cmd.dial(code))
+
+                except Exception as e:
+                    print("device {} is done".format(cmd.device))
+                    print(e)
+                    devices_finished +=1
+            else:
+                devices_finished += 1
+
+        ## short delay
+        ## screen shots
+        ## call teardowns
+        ## error notation
+
+        if devices_finished >= num:
+            print(" ****   all done!  ****")
+            break
+
+
