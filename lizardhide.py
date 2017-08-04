@@ -112,6 +112,7 @@ def assign_carrier(clue):
     print("No good guess for {}".format(clue))
     return ""
 
+
 def init_devices():
     """ initialize plugged-in devices and assign test plans """
     cmds = [Adb(device) for device in devicelist()]
@@ -148,7 +149,7 @@ if __name__ == "__main__":
                     print("device {} {} is done".format(cmd.device, cmd.alpha))
                     print(e)
                     cmd.finished = True
-                    devices_finished +=1
+                    devices_finished += 1
             else:
                 devices_finished += 1
 
@@ -168,5 +169,4 @@ if __name__ == "__main__":
         if devices_finished >= num:
             print(" ****   all done!  ****")
             break
-
-
+            
