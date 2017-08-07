@@ -74,6 +74,9 @@ class Adb(object):
     def hangup(self):
         return self.shell + ["input", "keyevent", "KEYCODE_ENDCALL"]
 
+    def home(self):
+        return self.shell + ["input", "keyevent", "KEYCODE_HOME"]
+
     def screenshot(self, test, sd_path):
         self.pic_paths[test] = sd_path
         return self.shell + ["screencap", "/sdcard/" + self.pic_paths[test]]
@@ -128,6 +131,8 @@ def init_devices():
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         cmd.display_config()
+        hey = ask(cmd.home())
+        print(hey)
         cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop()) if 'ro.home.operator' in j]
         if not cmd.alpha:
             print("-- no recognized carrier --")
@@ -138,11 +143,12 @@ def init_devices():
         cmd.gen = (c for c in cmd.testplan)
     return cmds
 
+
 if __name__ == "__main__":
     cmds = init_devices()
     path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
-
-    """ run test-plans """
+"""
+    # run test-plans
     while True:
         devices_finished = 0
         # activate the next command
@@ -179,3 +185,4 @@ if __name__ == "__main__":
         if devices_finished >= num:
             print(" ****   all done!  ****")
             break
+"""
