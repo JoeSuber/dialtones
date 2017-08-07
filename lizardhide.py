@@ -47,6 +47,7 @@ class Adb(object):
         self.pull = self.boiler_plate + ['pull']
         self.display_density = None
         self.display_multiplier = 1
+        self.OEM = None
         self.alpha = None
         self.testplan = None
         self.pic_paths = {}
@@ -70,6 +71,9 @@ class Adb(object):
 
     def getprop(self):
         return self.shell + ["getprop"]
+
+    def mfgr(self):
+        return self.getprop() + ["ro.product.manufacturer"]
 
     def hangup(self):
         return self.shell + ["input", "keyevent", "KEYCODE_ENDCALL"]
@@ -132,11 +136,13 @@ def init_devices():
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         cmd.display_config()
         ask(cmd.home())
+        cmd.OEM = ask(cmd.mfgr())[0].replace("\\r", "")
+        print("OEM: {}".format(cmd.OEM))
         cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop()) if 'ro.home.operator' in j]
         if not cmd.alpha:
             print("-- no recognized carrier --")
             continue
-        print(cmd.alpha[0])
+        print("Carrier: {}".format(cmd.alpha[0]))
         cmd.testplan = dial_codes['All'] + dial_codes[cmd.alpha[0]]
         cmd.pic_paths = {k: cmd.alpha[0].replace(" ", '') + "_" + str(k[0]) + "_scrn.png" for k in cmd.testplan}
         cmd.gen = (c for c in cmd.testplan)
