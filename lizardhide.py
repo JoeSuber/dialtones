@@ -131,8 +131,7 @@ def init_devices():
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         cmd.display_config()
-        hey = ask(cmd.home())
-        print(hey)
+        ask(cmd.home())
         cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop()) if 'ro.home.operator' in j]
         if not cmd.alpha:
             print("-- no recognized carrier --")
