@@ -55,7 +55,7 @@ class Adb(object):
     def android_id(self):
         return self.shell + ['content', 'query' ' --uri', '\"content://settings/secure/android_id\"', '--projection', 'value']
 
-    def tel_reg(self):
+    def telephony_registry(self):
         return self.shell + ['dumpsys', 'telephony.registry']
 
     def uri(self):
@@ -169,4 +169,3 @@ if __name__ == "__main__":
         if devices_finished >= num:
             print(" ****   all done!  ****")
             break
-            
