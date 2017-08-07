@@ -137,7 +137,7 @@ def init_devices():
         cmd.display_config()
         ask(cmd.home())
         cmd.OEM = ask(cmd.mfgr())[0].replace("\\r", "")
-        print("OEM: {}".format(cmd.OEM))
+        print("OEM:      {}".format(cmd.OEM))
         cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop()) if 'ro.home.operator' in j]
         if not cmd.alpha:
             print("-- no recognized carrier --")
