@@ -32,6 +32,11 @@ import glob
 from chamcodes import dial_codes, carriers
 
 
+def ask(cmd_str):
+    """ run an adb command string, return the terminal text output as a list of lines"""
+    return subprocess.run(cmd_str, stdout=subprocess.PIPE).stdout.decode("utf-8").split(os.linesep)
+
+
 class Adb(object):
     """ return properly formatted 'adb' command strings for subprocess to call when multiple devices are hooked up.
         Instances provide a place to stick the unique data for each device"""
@@ -40,6 +45,8 @@ class Adb(object):
         self.boiler_plate = ['adb', '-s', '{}'.format(device), 'wait-for-device']
         self.shell = self.boiler_plate + ['shell']
         self.pull = self.boiler_plate + ['pull']
+        self.display_density = None
+        self.display_multiplier = 1
         self.alpha = None
         self.testplan = None
         self.pic_paths = {}
@@ -89,10 +96,12 @@ class Adb(object):
         print("WARNING! not a valid path: {}".format(local_path))
         return []
 
-
-def ask(cmd_str):
-    """ run an adb command string, return the terminal text output """
-    return subprocess.run(cmd_str, stdout=subprocess.PIPE).stdout.decode("utf-8").split(os.linesep)
+    def display_config(self, xyxy=None):
+        if self.display_density is None:
+            self.display_density = int(ask(self.getprop() + ['ro.sf.lcd_density'])[0].strip())
+            print("display density: {}".format(self.display_density))
+            self.display_multiplier = self.display_density / 320
+        return self.display_density
 
 
 def devicelist():
@@ -118,6 +127,7 @@ def init_devices():
     cmds = [Adb(device) for device in devicelist()]
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
+        cmd.display_config()
         cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop()) if 'ro.home.operator' in j]
         if not cmd.alpha:
             print("-- no recognized carrier --")
