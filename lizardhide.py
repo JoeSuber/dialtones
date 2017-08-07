@@ -100,7 +100,7 @@ class Adb(object):
         if self.display_density is None:
             self.display_density = int(ask(self.getprop() + ['ro.sf.lcd_density'])[0].strip())
             print("display density: {}".format(self.display_density))
-            self.display_multiplier = self.display_density / 320
+            self.display_multiplier = self.display_density / 320.0
         return self.display_density
 
 
