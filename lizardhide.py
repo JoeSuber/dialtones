@@ -22,7 +22,7 @@ take screenshot
 -- parse results --
 
 http://adbshell.com/commands
-
+http://sprintdd.com/android/chameleon/
 """
 import subprocess
 import time
@@ -152,7 +152,7 @@ def init_devices():
 if __name__ == "__main__":
     cmds = init_devices()
     path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
-"""
+
     # run test-plans
     while True:
         devices_finished = 0
@@ -190,4 +190,3 @@ if __name__ == "__main__":
         if devices_finished >= num:
             print(" ****   all done!  ****")
             break
-"""
