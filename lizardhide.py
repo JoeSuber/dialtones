@@ -153,7 +153,7 @@ if __name__ == "__main__":
     cmds = init_devices()
     path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
 
-    # run test-plans
+    # run ADCs and call-intercepts
     while True:
         devices_finished = 0
         # activate the next command
