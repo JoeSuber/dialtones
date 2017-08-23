@@ -81,6 +81,9 @@ class Adb(object):
     def home(self):
         return self.shell + ["input", "keyevent", "KEYCODE_HOME"]
 
+    def back(self):
+        return self.shell + ["input", "keyevent", "KEYCODE_BACK"]
+
     def screenshot(self, test, sd_path):
         self.pic_paths[test] = sd_path
         return self.shell + ["screencap", "/sdcard/" + self.pic_paths[test]]
@@ -153,6 +156,17 @@ if __name__ == "__main__":
     cmds = init_devices()
     path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
 
+    # Home
+    for cmd in cmds:
+        print("{}".format(cmd.device))
+        ask(cmd.home())
+
+    for cmd in cmds:
+        ask(cmd.screenshot("homescreen", cmd.device))
+        ask(cmd.download("homescreen"))
+
+
+"""
     # run ADCs and call-intercepts
     while True:
         devices_finished = 0
@@ -190,3 +204,4 @@ if __name__ == "__main__":
         if devices_finished >= num:
             print(" ****   all done!  ****")
             break
+"""
