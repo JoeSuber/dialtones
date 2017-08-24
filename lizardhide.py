@@ -66,6 +66,9 @@ class Adb(object):
     def telephony_registry(self):
         return self.shell + ['dumpsys', 'telephony.registry']
 
+    def window(self):
+        return self.shell + ['dumpsys', 'window']
+
     def uri(self):
         return self.shell + ['content', 'query' ' --uri', '\"content://settings/system/\"']
 
@@ -106,12 +109,21 @@ class Adb(object):
         print("WARNING! not a valid path: {}".format(local_path))
         return []
 
-    def display_config(self, xyxy=None):
+    def display_config(self):
         if self.display_density is None:
             self.display_density = int(ask(self.getprop() + ['ro.sf.lcd_density'])[0].strip())
             print("display density: {}".format(self.display_density))
             self.display_multiplier = self.display_density / 320.0
         return self.display_density
+
+    def screen_xy(self):
+        stuff = ask(self.window())
+        for line in stuff:
+            if ('mUnrestrictedScreen' in line) and ("Original" not in line):
+                res = line.split(" ")[-1]
+                x, y = res.split("x")
+                self.x_max, self.y_max = int(x), int(y)
+                print("x, y max = ({}, {})".format(self.x_max, self.y_max))
 
 
 def devicelist():
@@ -138,6 +150,7 @@ def init_devices():
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         cmd.display_config()
+        cmd.screen_xy()
         ask(cmd.home())
         cmd.OEM = ask(cmd.mfgr())[0].replace("\\r", "")
         print("OEM:      {}".format(cmd.OEM))
@@ -161,10 +174,11 @@ if __name__ == "__main__":
         print("{}".format(cmd.device))
         ask(cmd.home())
 
+"""
     for cmd in cmds:
         ask(cmd.screenshot("homescreen", cmd.device))
         ask(cmd.download("homescreen"))
-
+"""
 
 """
     # run ADCs and call-intercepts
