@@ -45,12 +45,13 @@ class Adb(object):
         self.boiler_plate = ['adb', '-s', '{}'.format(device), 'wait-for-device']
         self.shell = self.boiler_plate + ['shell']
         self.pull = self.boiler_plate + ['pull']
+        self.swipe_front = self.shell + ["input", "swipe"]
         self.display_density = None
         self.display_multiplier = 1
         self.OEM = None
         self.alpha = None
         self.testplan = None
-        self.pic_paths = {}
+        self.pic_paths = []
         self.gen = ()
         self.current_code = ""
         self.time_on = 0    # zero will turn on the execution of commands
@@ -59,6 +60,7 @@ class Adb(object):
         self.outputdir = os.path.join(os.getcwd(), "pics")
         if not os.path.exists(self.outputdir):
             os.mkdir(self.outputdir)
+        print("Screenshot storage: {}".format(self.outputdir))
 
     def android_id(self):
         return self.shell + ['content', 'query' ' --uri', '\"content://settings/secure/android_id\"', '--projection', 'value']
@@ -75,24 +77,35 @@ class Adb(object):
     def getprop(self):
         return self.shell + ["getprop"]
 
+    def keyevent(self):
+        return self.shell + ["input", "keyevent"]
+
     def mfgr(self):
         return self.getprop() + ["ro.product.manufacturer"]
 
     def hangup(self):
-        return self.shell + ["input", "keyevent", "KEYCODE_ENDCALL"]
+        return self.keyevent() + ["KEYCODE_ENDCALL"]
 
     def home(self):
-        return self.shell + ["input", "keyevent", "KEYCODE_HOME"]
+        return self.keyevent() + ["KEYCODE_HOME"]
 
     def back(self):
-        return self.shell + ["input", "keyevent", "KEYCODE_BACK"]
+        return self.keyevent() + ["KEYCODE_BACK"]
 
-    def screenshot(self, test, sd_path):
-        self.pic_paths[test] = sd_path
-        return self.shell + ["screencap", "/sdcard/" + self.pic_paths[test]]
+    def swipe(self, x1, y1, x2, y2):
+        xa = str(int(self.x_max * x1))
+        ya = str(int(self.y_max * y1))
+        xb = str(int(self.x_max * x2))
+        yb = str(int(self.y_max * y2))
+        return self.swipe_front + [xa, ya, xb, yb]
 
-    def download(self, path):
-        return self.pull + ["/sdcard/" + path, self.outputdir]
+    def screenshot(self, pic_name):
+        pic_path = "/sdcard/" + self.device + "_" + pic_name
+        self.pic_paths.append(pic_path)
+        return self.shell + ["screencap", "-p", pic_path]
+
+    def download(self, pic_name):
+        return self.pull + ["/sdcard/" + self.device + "_" + pic_name, self.outputdir]
 
     def dial(self, code):
         return self.shell + ["am", "start", "-a", "android.intent.action.CALL", "-d", "tel:{}".format(code)]
@@ -113,17 +126,15 @@ class Adb(object):
         if self.display_density is None:
             self.display_density = int(ask(self.getprop() + ['ro.sf.lcd_density'])[0].strip())
             print("display density: {}".format(self.display_density))
-            self.display_multiplier = self.display_density / 320.0
-        return self.display_density
 
-    def screen_xy(self):
         stuff = ask(self.window())
         for line in stuff:
             if ('mUnrestrictedScreen' in line) and ("Original" not in line):
                 res = line.split(" ")[-1]
                 x, y = res.split("x")
                 self.x_max, self.y_max = int(x), int(y)
-                print("x, y max = ({}, {})".format(self.x_max, self.y_max))
+                print("x max, y max = ({}, {})".format(self.x_max, self.y_max))
+        return self.display_density
 
 
 def devicelist():
@@ -150,7 +161,6 @@ def init_devices():
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         cmd.display_config()
-        cmd.screen_xy()
         ask(cmd.home())
         cmd.OEM = ask(cmd.mfgr())[0].replace("\\r", "")
         print("OEM:      {}".format(cmd.OEM))
@@ -160,7 +170,6 @@ def init_devices():
             continue
         print("Carrier: {}".format(cmd.alpha[0]))
         cmd.testplan = dial_codes['All'] + dial_codes[cmd.alpha[0]]
-        cmd.pic_paths = {k: cmd.alpha[0].replace(" ", '') + "_" + str(k[0]) + "_scrn.png" for k in cmd.testplan}
         cmd.gen = (c for c in cmd.testplan)
     return cmds
 
@@ -171,9 +180,13 @@ if __name__ == "__main__":
 
     # Home
     for cmd in cmds:
-        print("{}".format(cmd.device))
+        print("homescreen for {}".format(cmd.device))
         ask(cmd.home())
-
+        ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
+        ask(cmd.home())
+        time.sleep(1)
+        ask(cmd.screenshot("homescreen.png"))
+        ask(cmd.download("homescreen.png"))
 """
     for cmd in cmds:
         ask(cmd.screenshot("homescreen", cmd.device))
