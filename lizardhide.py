@@ -47,7 +47,6 @@ class Adb(object):
         self.pull = self.boiler_plate + ['pull']
         self.swipe_front = self.shell + ["input", "swipe"]
         self.display_density = None
-        self.display_multiplier = 1
         self.OEM = None
         self.alpha = None
         self.testplan = None
@@ -187,11 +186,7 @@ if __name__ == "__main__":
         time.sleep(1)
         ask(cmd.screenshot("homescreen.png"))
         ask(cmd.download("homescreen.png"))
-"""
-    for cmd in cmds:
-        ask(cmd.screenshot("homescreen", cmd.device))
-        ask(cmd.download("homescreen"))
-"""
+
 
 """
     # run ADCs and call-intercepts
