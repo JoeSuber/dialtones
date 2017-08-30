@@ -26,10 +26,9 @@ http://sprintdd.com/android/chameleon/
 """
 import subprocess
 import time
-import sys
 import os
-import glob
 from chamcodes import dial_codes, carriers
+from psycon import iconograph
 
 
 def ask(cmd_str):
@@ -44,8 +43,19 @@ class Adb(object):
         self.device = device
         self.boiler_plate = ['adb', '-s', '{}'.format(device), 'wait-for-device']
         self.shell = self.boiler_plate + ['shell']
+        self.android_id = self.shell + ['content', 'query' ' --uri',
+                                        '\"content://settings/secure/android_id\"', '--projection', 'value']
+        self.window = self.shell + ['dumpsys', 'window']
         self.pull = self.boiler_plate + ['pull']
         self.swipe_front = self.shell + ["input", "swipe"]
+        self.tapper = self.shell + ["input", "touchscreen", "tap"]
+        self.keyevent = self.shell + ["input", "keyevent"]
+        self.back = self.keyevent + ["KEYCODE_BACK"]
+        self.home = self.keyevent + ["KEYCODE_HOME"]
+        self.hangup = self.keyevent + ["KEYCODE_ENDCALL"]
+        self.getprop = self.shell + ["getprop"]
+        self.mfgr = self.getprop + ["ro.product.manufacturer"]
+        self.uri = self.shell + ['content', 'query' ' --uri', '\"content://settings/system/\"']
         self.display_density = None
         self.OEM = None
         self.alpha = None
@@ -61,42 +71,15 @@ class Adb(object):
             os.mkdir(self.outputdir)
         print("Screenshot storage: {}".format(self.outputdir))
 
-    def android_id(self):
-        return self.shell + ['content', 'query' ' --uri', '\"content://settings/secure/android_id\"', '--projection', 'value']
-
-    def telephony_registry(self):
-        return self.shell + ['dumpsys', 'telephony.registry']
-
-    def window(self):
-        return self.shell + ['dumpsys', 'window']
-
-    def uri(self):
-        return self.shell + ['content', 'query' ' --uri', '\"content://settings/system/\"']
-
-    def getprop(self):
-        return self.shell + ["getprop"]
-
-    def keyevent(self):
-        return self.shell + ["input", "keyevent"]
-
-    def mfgr(self):
-        return self.getprop() + ["ro.product.manufacturer"]
-
-    def hangup(self):
-        return self.keyevent() + ["KEYCODE_ENDCALL"]
-
-    def home(self):
-        return self.keyevent() + ["KEYCODE_HOME"]
-
-    def back(self):
-        return self.keyevent() + ["KEYCODE_BACK"]
-
     def swipe(self, x1, y1, x2, y2):
         xa = str(int(self.x_max * x1))
         ya = str(int(self.y_max * y1))
         xb = str(int(self.x_max * x2))
         yb = str(int(self.y_max * y2))
         return self.swipe_front + [xa, ya, xb, yb]
+
+    def tap(self, x, y):
+        return self.tapper + [str(x), str(y)]
 
     def screenshot(self, pic_name):
         pic_path = "/sdcard/" + self.device + "_" + pic_name
@@ -105,6 +88,14 @@ class Adb(object):
 
     def download(self, pic_name):
         return self.pull + ["/sdcard/" + self.device + "_" + pic_name, self.outputdir]
+
+    def pc_pics(self, keyword):
+        localpic = [os.path.join(self.outputdir, fn.split("/")[-1]) for fn in cmd.pic_paths
+                    if (keyword in fn) and (self.device in fn)]
+        if len(localpic) > 1:
+            print("Warning! Multiple pics include '{}' in dir: {}".format(keyword, self.outputdir))
+            return []
+        return localpic[0]
 
     def dial(self, code):
         return self.shell + ["am", "start", "-a", "android.intent.action.CALL", "-d", "tel:{}".format(code)]
@@ -123,10 +114,10 @@ class Adb(object):
 
     def display_config(self):
         if self.display_density is None:
-            self.display_density = int(ask(self.getprop() + ['ro.sf.lcd_density'])[0].strip())
+            self.display_density = int(ask(self.getprop + ['ro.sf.lcd_density'])[0].strip())
             print("display density: {}".format(self.display_density))
 
-        stuff = ask(self.window())
+        stuff = ask(self.window)
         for line in stuff:
             if ('mUnrestrictedScreen' in line) and ("Original" not in line):
                 res = line.split(" ")[-1]
@@ -160,10 +151,10 @@ def init_devices():
     for num, cmd in enumerate(cmds):
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         cmd.display_config()
-        ask(cmd.home())
-        cmd.OEM = ask(cmd.mfgr())[0].replace("\\r", "")
+        ask(cmd.home)
+        cmd.OEM = ask(cmd.mfgr)[0].replace("\\r", "")
         print("OEM:      {}".format(cmd.OEM))
-        cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop()) if 'ro.home.operator' in j]
+        cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop) if 'ro.home.operator' in j]
         if not cmd.alpha:
             print("-- no recognized carrier --")
             continue
@@ -180,13 +171,25 @@ if __name__ == "__main__":
     # Home
     for cmd in cmds:
         print("homescreen for {}".format(cmd.device))
-        ask(cmd.home())
+        ask(cmd.home)
         ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
-        ask(cmd.home())
+        ask(cmd.home)
         time.sleep(1)
         ask(cmd.screenshot("homescreen.png"))
         ask(cmd.download("homescreen.png"))
 
+    # Playstore
+    for cmd in cmds:
+        screen_fn = cmd.pc_pics("homescreen")
+        icon_fn = os.path.join(os.getcwd(), "pics", 'playstore_tiny.png')
+        ask(cmd.home)
+        ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
+        ask(cmd.home)
+        x, y = iconograph(screen_fn, icon_fn)
+        ask(cmd.tap(x, y))
+        time.sleep(2.5)
+        ask(cmd.screenshot("playstore.png"))
+        ask(cmd.download("playstore.png"))
 
 """
     # run ADCs and call-intercepts
