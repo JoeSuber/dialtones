@@ -1,5 +1,24 @@
 """ automate chameleon and hidden menu device tests.
 
+Lock Screen (look for SKU)
+Home Screen (if no app drawer screenshots of all apps)
+App Drawer Screens
+Contacts (Boost has 3 preloaded)
+Recent Calls/Call History
+Voicemail
+##DATA# MMSC (URL, Proxy, Proxy Port)
+##DIAG# (if lock screen 2 screenshots)
+Mobile Networks in Settings
+Roaming Menu
+All Hotspot Menus (hotpsot, more)
+Legal Information
+Google Legal
+Privacy Alerts (click proceed)
+Messaging
+Signature EMail - Yahoo Royals2406 royals06 (settings of email)dvtandctest/donotchange
+Play Store - OEM Logo (No logo whne Wholesale and inactive)
+Gallery
+
 psuedo:
 
 - setup -
