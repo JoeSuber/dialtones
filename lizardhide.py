@@ -232,7 +232,7 @@ if __name__ == "__main__":
     for cmd in cmds:
         print("Notification Tray for {} {}".format(cmd.alpha, cmd.device))
         homescreen(cmd)
-        ask(cmd.swipe(0.5, 0.01, 0.5, 0.8))
+        ask(cmd.swipe(0.5, 0.01, 0.5, 0.8))     # swipe down from top
         time.sleep(1)
         ask(cmd.screenshot("notificationtray.png"))
 
@@ -243,10 +243,10 @@ if __name__ == "__main__":
         icon_fn = os.path.join(cmd.icon_dir, 'apps_tiny.png')
         homescreen(cmd)
         x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)[1]
-        time.sleep(1)   # wait for homescreen
+        time.sleep(1)       # wait for home screen
         ask(cmd.tap(x, y))
         for n in range(3):
-            time.sleep(1)   # wait for apptray
+            time.sleep(1)   # wait for app tray
             ask(cmd.screenshot("apptray>{}.png".format(n)))
             ask(cmd.swipe(0.9, 0.8, 0.1, 0.8))
 
