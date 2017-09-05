@@ -108,7 +108,7 @@ class Adb(object):
         return self.tapper + [str(x), str(y)]
 
     def screenshot(self, pic_name):
-        pic_path = "/sdcard/" + self.device + "_" + self.OEM + "_" + pic_name
+        pic_path = "/sdcard/" + self.device + "_" + self.OEM + "_" + self.alpha[0] + "_" + pic_name
         self.pic_paths.append(pic_path)
         return self.shell + ["screencap", "-p", pic_path]
 
@@ -181,31 +181,30 @@ def init_devices():
         print("#{:3}            *********************  {}  **********************".format(num + 1, cmd.device))
         cmd.display_config()
         ask(cmd.home)
-        cmd.OEM = ask(cmd.mfgr)[0].replace("\\r", "")
+        cmd.OEM = ask(cmd.mfgr)[0].replace("\\r", "").replace("\r", "")
         print("OEM:      {}".format(cmd.OEM))
         cmd.alpha = [assign_carrier(j) for j in ask(cmd.getprop) if 'ro.home.operator' in j]
         if not cmd.alpha:
-            print("-- no recognized carrier --")
-            continue
-        print("Carrier: {}".format(cmd.alpha[0]))
+            cmd.alpha = ['NA']
         cmd.testplan = dial_codes['All'] + dial_codes[cmd.alpha[0]]
+        print("Carrier: {}".format(cmd.alpha[0]))
         cmd.gen = (c for c in cmd.testplan)
     return cmds
 
 
 def homescreen(cmd_instance):
     ask(cmd_instance.home)
-    ask(cmd_instance.swipe(0.1, 0.8, 0.9, 0.8))
+    ask(cmd_instance.swipe(0.1, 0.8, 0.9, 0.8))     # swipe right
     ask(cmd_instance.home)
     time.sleep(0.8)
 
 
 def download_all_pics(cmd_objects):
     for cmd_instance in cmd_objects:
-        print("downloading pics for {}:".format(cmd_instance.device))
+        print("downloading pics for {} {}:".format(cmd_instance.OEM, cmd_instance.device))
         for path in cmd_instance.pic_paths:
             localname = path.split("/")[-1]
-            print("    {}".format(localname))
+            print("-    {}".format(localname))
             ask(cmd_instance.download(localname))
 
 
@@ -217,41 +216,46 @@ if __name__ == "__main__":
     for cmd in cmds:
         ask(cmd.home)
         time.sleep(0.8)
-        print("homefront {}".format(cmd.OEM))
+        print("homefront {} {}".format(cmd.alpha, cmd.device))
         ask(cmd.screenshot("homefront.png"))
         homescreen(cmd)
-        print("homescreen {}".format(cmd.OEM))
+        print("homescreen {} {}".format(cmd.alpha, cmd.device))
         ask(cmd.screenshot("homescreen.png"))
+
+    # download all pics
+    download_all_pics(cmds)
 
     # notification Tray
     for cmd in cmds:
-        print("Notification Tray for {}".format(cmd.device))
+        print("Notification Tray for {} {}".format(cmd.alpha, cmd.device))
         homescreen(cmd)
         ask(cmd.swipe(0.5, 0.01, 0.5, 0.8))
-        time.sleep(0.8)
-        ask(cmd.swipe(0.5, 0.01, 0.5, 0.8))
-        time.sleep((0.8))
+        time.sleep(1)
         ask(cmd.screenshot("notificationtray.png"))
 
     # app tray
     for cmd in cmds:
-        print("App Tray for {}".format(cmd.device))
+        print("App Tray for {} {}".format(cmd.alpha, cmd.device))
+        screen_fn = cmd.pc_pics("homescreen")
+        icon_fn = os.path.join(cmd.icon_dir, 'apps_tiny.png')
         homescreen(cmd)
-        time.sleep(1)
-        ask(cmd.screenshot("apptray.png"))
-
-    # download pics
-    download_all_pics(cmds)
+        x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)[1]
+        time.sleep(1)   # wait for homescreen
+        ask(cmd.tap(x, y))
+        for n in range(3):
+            time.sleep(1)   # wait for apptray
+            ask(cmd.screenshot("apptray>{}.png".format(n)))
+            ask(cmd.swipe(0.9, 0.8, 0.1, 0.8))
 
     # playstore
     for cmd in cmds:
-        print("playstore for {}".format(cmd.device))
+        print("playstore for {} {}".format(cmd.alpha, cmd.device))
         screen_fn = cmd.pc_pics("homescreen")
         icon_fn = os.path.join(cmd.icon_dir, 'playstore_tiny.png')
         homescreen(cmd)
         x, y = iconograph(screen_fn, icon_fn)
         ask(cmd.tap(x, y))
-        time.sleep(2.5)
+        time.sleep(1.8)
         ask(cmd.screenshot("playstore.png"))
 
     download_all_pics(cmds)

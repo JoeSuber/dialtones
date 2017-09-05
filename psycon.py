@@ -15,7 +15,7 @@ resolutions = [(320, 480), (480,800), (540,960), (600,1024), (640, 1136), (720,1
                (1080, 1920), (1440, 2560), (1440, 2880)]
 
 def iconograph(screen_path, icon_path, icon_source_size=(720, 1280), DEBUG=False):
-    """ """
+    """ returns coordinates in an image that best match the given icon """
     image = cv2.imread(screen_path, cv2.IMREAD_GRAYSCALE)
     if DEBUG: print("screen size: {}".format(image.shape))
     raw_icon = cv2.imread(icon_path, cv2.IMREAD_GRAYSCALE)
@@ -45,6 +45,7 @@ def iconograph(screen_path, icon_path, icon_source_size=(720, 1280), DEBUG=False
 
 
 def colors(im=None):
+    """ not really related. Just helps with finding details in gray scale images """
     if im is None:
         path = "C:\\Users\\2053_HSUF\\PycharmProjects\\dialtones\\pics\\76aa16c9_playstore.png"
         im = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
@@ -61,12 +62,15 @@ if __name__ == "__main__":
     print(cv2.__version__)
     print(np.__version__)
 
-    iconpath = os.path.join(os.getcwd(), "pics", 'playstore_tiny.png')
+    iconpaths = [os.path.join(os.getcwd(), "icons", icp)
+                for icp in os.listdir(os.path.join(os.getcwd(), "icons")) if icp.endswith(".png")]
 
     images = [os.path.join(os.getcwd(), "pics", ip)
               for ip in os.listdir(os.path.join(os.getcwd(), "pics")) if ip.endswith(".png")]
 
-    for impath in images:
-        colors(im=cv2.imread(impath, cv2.IMREAD_GRAYSCALE))
-        print(iconograph(impath, iconpath, DEBUG=True))
+    for icp in iconpaths:
+        cv2.imshow("Finding:", cv2.imread(icp))
+        for impath in images:
+            # colors(im=cv2.imread(impath, cv2.IMREAD_GRAYSCALE))
+            print(iconograph(impath, icp, DEBUG=True))
 

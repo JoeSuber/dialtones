@@ -18,7 +18,7 @@ dial_codes = {
         ('*4', '#123'),
         ('0', '#123')
         ],
-    'Boost mobile': [
+    'Boost-Mobile': [
         ('888667848', '#611'),
         ('1888667848', '#311'),
         # ('*411','Directory'),
@@ -49,12 +49,13 @@ dial_codes = {
         ('*611', '*611'),
         ('#611', '#611'),
         ('611', '611')
-        ]}
+        ],
+    'NA': []}
 
 
 carriers = {'Sprint-Prepaid': ["SPRPRE"],
             'Sprint-PCS': ["SPRINT"],
-            'Boost mobile': ['BOOST'],
+            'Boost-Mobile': ['BOOST'],
             'VirginMobile': ['849', 'VMU'],
             'tsp': ['Chameleon']
             }
