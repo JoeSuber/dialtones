@@ -213,9 +213,8 @@ def download_all_pics(cmd_objects):
 
 if __name__ == "__main__":
     cmds = init_devices()
-    path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
 
-    # home
+    # home screens
     for cmd in cmds:
         ask(cmd.home)
         time.sleep(0.8)
@@ -225,10 +224,10 @@ if __name__ == "__main__":
         print("homescreen {} {}".format(cmd.alpha, cmd.device))
         ask(cmd.screenshot("homescreen.png"))
 
-    # download all pics
+    # download all pics (icon-finder will use soon)
     download_all_pics(cmds)
 
-    # notification Tray
+    # Notification Tray
     for cmd in cmds:
         print("Notification Tray for {} {}".format(cmd.alpha, cmd.device))
         homescreen(cmd)
