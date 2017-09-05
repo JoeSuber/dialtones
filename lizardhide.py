@@ -193,6 +193,7 @@ def init_devices():
 
 
 def homescreen(cmd_instance):
+    """ moves device interface to home start position """
     ask(cmd_instance.home)
     ask(cmd_instance.swipe(0.1, 0.8, 0.9, 0.8))     # swipe right
     ask(cmd_instance.home)
@@ -200,6 +201,8 @@ def homescreen(cmd_instance):
 
 
 def download_all_pics(cmd_objects):
+    """ gets all the pics from paths stored in each local device-instance.
+    DOES NOT check the the actual device's storage areas! """
     for cmd_instance in cmd_objects:
         print("downloading pics for {} {}:".format(cmd_instance.OEM, cmd_instance.device))
         for path in cmd_instance.pic_paths:
@@ -258,6 +261,7 @@ if __name__ == "__main__":
         time.sleep(1.8)
         ask(cmd.screenshot("playstore.png"))
 
+    # download all pics
     download_all_pics(cmds)
 
 """
