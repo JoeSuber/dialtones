@@ -1,13 +1,6 @@
 dial_codes = {
     'All': [
-        ('1', '#611'),
-        ('211', 'Community'),
-        ('311', 'Non-emergency'),
-        ('411', 'Directory'),
-        ('511', 'Traffic'),
-        ('611', 'Self-Service'),
-        ('711', 'Relay'),
-        ('811', 'Before')
+        ('611', 'Self-Service')
         ],
     'Sprint-Prepaid': [
         ('*3', '#611'),

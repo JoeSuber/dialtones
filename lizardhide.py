@@ -1,4 +1,5 @@
-""" automate chameleon and hidden menu device tests.
+"""
+automate chameleon and hidden menu device tests.
 
 Lock Screen (look for SKU)
 Home Screen (if no app drawer screenshots of all apps)
@@ -82,15 +83,20 @@ class Adb(object):
         self.pic_paths = []
         self.gen = ()
         self.current_code = ""
-        self.time_on = 0    # zero will turn on the execution of commands
-        self.delay = 10      # seconds
+        self.time_on = 0        # zero will turn on the execution of commands
+        self.delay = 10         # seconds
         self.finished = False
         self.outputdir = os.path.join(os.getcwd(), "pics")
+        self.icon_dir = os.path.join(os.getcwd(), "icons")
         if not os.path.exists(self.outputdir):
             os.mkdir(self.outputdir)
+        if not os.path.exists(self.icon_dir):
+            os.mkdir(self.icon_dir)
         print("Screenshot storage: {}".format(self.outputdir))
+        print("Icon storage: {}".format(self.icon_dir))
 
     def swipe(self, x1, y1, x2, y2):
+        """ inputs are ratios from zero to 1 of max screen dimension """
         xa = str(int(self.x_max * x1))
         ya = str(int(self.y_max * y1))
         xb = str(int(self.x_max * x2))
@@ -98,15 +104,17 @@ class Adb(object):
         return self.swipe_front + [xa, ya, xb, yb]
 
     def tap(self, x, y):
+        """ x and y are screen coordinate integers """
         return self.tapper + [str(x), str(y)]
 
     def screenshot(self, pic_name):
-        pic_path = "/sdcard/" + self.device + "_" + pic_name
+        pic_path = "/sdcard/" + self.device + "_" + self.OEM + "_" + pic_name
         self.pic_paths.append(pic_path)
         return self.shell + ["screencap", "-p", pic_path]
 
     def download(self, pic_name):
-        return self.pull + ["/sdcard/" + self.device + "_" + pic_name, self.outputdir]
+        """ note pic_name should have the device and OEM built into it's front """
+        return self.pull + ["/sdcard/" + pic_name, self.outputdir]
 
     def pc_pics(self, keyword):
         localpic = [os.path.join(self.outputdir, fn.split("/")[-1]) for fn in cmd.pic_paths
@@ -115,6 +123,9 @@ class Adb(object):
             print("Warning! Multiple pics include '{}' in dir: {}".format(keyword, self.outputdir))
             return []
         return localpic[0]
+
+    def text(self, txt):
+        return self.shell + ["input", "text", str(txt)]
 
     def dial(self, code):
         return self.shell + ["am", "start", "-a", "android.intent.action.CALL", "-d", "tel:{}".format(code)]
@@ -135,7 +146,6 @@ class Adb(object):
         if self.display_density is None:
             self.display_density = int(ask(self.getprop + ['ro.sf.lcd_density'])[0].strip())
             print("display density: {}".format(self.display_density))
-
         stuff = ask(self.window)
         for line in stuff:
             if ('mUnrestrictedScreen' in line) and ("Original" not in line):
@@ -183,32 +193,68 @@ def init_devices():
     return cmds
 
 
+def homescreen(cmd_instance):
+    ask(cmd_instance.home)
+    ask(cmd_instance.swipe(0.1, 0.8, 0.9, 0.8))
+    ask(cmd_instance.home)
+    time.sleep(0.8)
+
+
+def download_all_pics(cmd_objects):
+    for cmd_instance in cmd_objects:
+        print("downloading pics for {}:".format(cmd_instance.device))
+        for path in cmd_instance.pic_paths:
+            localname = path.split("/")[-1]
+            print("    {}".format(localname))
+            ask(cmd_instance.download(localname))
+
+
 if __name__ == "__main__":
     cmds = init_devices()
     path = os.path.join('C:\\', 'Users', '2053_HSUF', 'Desktop')
 
-    # Home
+    # home
     for cmd in cmds:
-        print("homescreen for {}".format(cmd.device))
         ask(cmd.home)
-        ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
-        ask(cmd.home)
-        time.sleep(1)
+        time.sleep(0.8)
+        print("homefront {}".format(cmd.OEM))
+        ask(cmd.screenshot("homefront.png"))
+        homescreen(cmd)
+        print("homescreen {}".format(cmd.OEM))
         ask(cmd.screenshot("homescreen.png"))
-        ask(cmd.download("homescreen.png"))
 
-    # Playstore
+    # notification Tray
     for cmd in cmds:
+        print("Notification Tray for {}".format(cmd.device))
+        homescreen(cmd)
+        ask(cmd.swipe(0.5, 0.01, 0.5, 0.8))
+        time.sleep(0.8)
+        ask(cmd.swipe(0.5, 0.01, 0.5, 0.8))
+        time.sleep((0.8))
+        ask(cmd.screenshot("notificationtray.png"))
+
+    # app tray
+    for cmd in cmds:
+        print("App Tray for {}".format(cmd.device))
+        homescreen(cmd)
+        time.sleep(1)
+        ask(cmd.screenshot("apptray.png"))
+
+    # download pics
+    download_all_pics(cmds)
+
+    # playstore
+    for cmd in cmds:
+        print("playstore for {}".format(cmd.device))
         screen_fn = cmd.pc_pics("homescreen")
-        icon_fn = os.path.join(os.getcwd(), "pics", 'playstore_tiny.png')
-        ask(cmd.home)
-        ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
-        ask(cmd.home)
+        icon_fn = os.path.join(cmd.icon_dir, 'playstore_tiny.png')
+        homescreen(cmd)
         x, y = iconograph(screen_fn, icon_fn)
         ask(cmd.tap(x, y))
         time.sleep(2.5)
         ask(cmd.screenshot("playstore.png"))
-        ask(cmd.download("playstore.png"))
+
+    download_all_pics(cmds)
 
 """
     # run ADCs and call-intercepts

@@ -44,6 +44,17 @@ def iconograph(screen_path, icon_path, icon_source_size=(720, 1280), DEBUG=False
     return best_match if DEBUG else best_match[1]
 
 
+def colors(im=None):
+    if im is None:
+        path = "C:\\Users\\2053_HSUF\\PycharmProjects\\dialtones\\pics\\76aa16c9_playstore.png"
+        im = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    for shade in range(13):
+        colorized = cv2.applyColorMap(im, shade)
+        cv2.imshow("yo", colorized)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
 if __name__ == "__main__":
     """ for testing one icon against a bunch of screens """
 
@@ -56,5 +67,6 @@ if __name__ == "__main__":
               for ip in os.listdir(os.path.join(os.getcwd(), "pics")) if ip.endswith(".png")]
 
     for impath in images:
+        colors(im=cv2.imread(impath, cv2.IMREAD_GRAYSCALE))
         print(iconograph(impath, iconpath, DEBUG=True))
 
