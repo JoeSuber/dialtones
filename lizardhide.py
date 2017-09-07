@@ -80,6 +80,7 @@ class Adb(object):
         self.OEM = None
         self.alpha = None
         self.testplan = None
+        self.MSL = None
         self.pic_paths = []
         self.gen = ()
         self.current_code = ""
@@ -241,13 +242,18 @@ if __name__ == "__main__":
         screen_fn = cmd.pc_pics("homescreen")
         icon_fn = os.path.join(cmd.icon_dir, 'apps_tiny.png')
         homescreen(cmd)
-        x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)[1]
+        x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)
         time.sleep(1)       # wait for home screen
         ask(cmd.tap(x, y))
+        time.sleep(1)       # change screens
+        for n in range(3):  # move it back to page 1
+            ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
         for n in range(3):
-            time.sleep(1)   # wait for app tray
-            ask(cmd.screenshot("apptray>{}.png".format(n)))
+            time.sleep(0.8)   # wait for app tray
+            ask(cmd.screenshot("apptray-{}.png".format(n)))
             ask(cmd.swipe(0.9, 0.8, 0.1, 0.8))
+        for n in range(3):  # move it back to page 1
+            ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
 
     # playstore
     for cmd in cmds:
@@ -257,7 +263,7 @@ if __name__ == "__main__":
         homescreen(cmd)
         x, y = iconograph(screen_fn, icon_fn)
         ask(cmd.tap(x, y))
-        time.sleep(1.8)
+        time.sleep(3)
         ask(cmd.screenshot("playstore.png"))
 
     # download all pics
