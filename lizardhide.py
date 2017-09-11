@@ -43,6 +43,8 @@ take screenshot
 
 http://adbshell.com/commands
 http://sprintdd.com/android/chameleon/
+
+# adb shell input keyevent --longpress KEYCODE_L
 """
 import subprocess
 import time
