@@ -18,7 +18,7 @@ def whatsay(img_path=None):
     if not img_path or (not os.path.exists(img_path)):
         print("IMAGE FILE NOT FOUND: {}".format(img_path))
     text = re.findall(r"[\w']+", pytesseract.image_to_string(Image.open(img_path)))
-    return [t for t in text if len(t) > 3]
+    return [t for t in text if len(t) > 2]
 
 
 if __name__ == "__main__":
