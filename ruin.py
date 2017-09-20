@@ -69,7 +69,7 @@ def ruin(stake=stake, target=target, bet=bet, trials=trials):
           .format(100*(wins/float(trials)), stake, target, bet, promo_avg, time_spent, promo_min, promo_max, jackpots))
 
 
-stakes = [100]
+stakes = [100, 200]
 targets = [500, 2000]
 bets = [0.50, 1.25, 2.5, 5]
 
