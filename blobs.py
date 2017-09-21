@@ -69,7 +69,7 @@ if __name__ == "__main__":
     pic4 = os.path.join(picsdir, "43e6ce04_samsung_tsp_apptray-2.png")
     pic5 = os.path.join(picsdir, "76aa16c9_samsung_Sprint-PCS_apptray-0.png")
     pics = [pic1, pic2, pic3, pic4, pic5]
-
+    print("{} pictures in que".format(len(pics)))
     for pic in pics:
         print("looking at: {}".format(pic))
 
@@ -83,10 +83,9 @@ if __name__ == "__main__":
                 display_patch = img[kept.y1:kept.y2, kept.x1:kept.x2]
                 cv2.imshow("{}".format(" ".join(kept.text)), display_patch)
             cv2.circle(out_img, (kept.center_x, kept.center_y), 5, (0,0,255), 3)
-            cv2.rectangle(out_img, (kept.x1, kept.y1), (kept.x2, kept.y2), (0,255,0), thickness=1)
+            cv2.rectangle(out_img, (kept.x1, kept.y1), (kept.x2, kept.y2), (0,255,0), thickness=2)
 
         cv2.imshow("contours", out_img)
-
         ch = cv2.waitKey(0)
         if ch == 27:
             cv2.destroyAllWindows()
