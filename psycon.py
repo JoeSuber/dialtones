@@ -17,6 +17,8 @@ resolutions = [(320, 480), (480,800), (540,960), (600,1024), (640, 1136), (720,1
 def iconograph(screen_path, icon_path, icon_source_size=(720, 1280), DEBUG=False):
     """ returns coordinates in an image that best match the given icon """
     image = cv2.imread(screen_path, cv2.IMREAD_GRAYSCALE)
+    if image is None:
+        print("INVALID SCREEN PATH: {}".format(screen_path))
     if DEBUG: print("screen size: {}".format(image.shape))
     raw_icon = cv2.imread(icon_path, cv2.IMREAD_GRAYSCALE)
     best_match = None

@@ -16,7 +16,6 @@ import os
 
 class Dialer(object):
     """ init with quantity of dial tests and duration of call"""
-
     def __init__(self, reps=10, duration=35, timeout=20, wait=10, callers=None, logbook=None):
         self.devices = self.devicelist()
         self.wait = wait
