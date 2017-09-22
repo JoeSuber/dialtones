@@ -49,8 +49,10 @@ http://sprintdd.com/android/chameleon/
 import subprocess
 import time
 import os
+import csv
 from chamcodes import dial_codes, carriers
 from psycon import iconograph
+from blobs import scry
 
 
 def ask(cmd_str):
@@ -63,6 +65,7 @@ class Adb(object):
         Instances provide a place to stick the unique data for each device"""
     def __init__(self, device):
         self.device = device
+        self.msl = None
         self.boiler_plate = ['adb', '-s', '{}'.format(device), 'wait-for-device']
         self.shell = self.boiler_plate + ['shell']
         self.android_id = self.shell + ['content', 'query' ' --uri',
@@ -177,6 +180,29 @@ def assign_carrier(clue):
     return ""
 
 
+def assign_msl(devices, msl_file="_msl.txt"):
+    for device in devices:
+        if not os.path.exists(device.icon_dir):
+            os.mkdir(device.icon_dir)
+        fn = os.path.join(device.icon_dir, device.device + msl_file)
+        if os.path.exists(fn):
+            with open(fn, "r") as fob:
+                device.msl = fob.read().strip()
+                print("msl for {} = {}".format(device.device, device.msl))
+        if not device.msl:
+            print("Please assign the correct MSL to this device: {}".format(device.device))
+            homescreen(device)
+            device.msl = str(input("(it should have just blinked on) : ").strip())
+            try:
+                int(device.msl)
+                with open(fn, "w") as fob:
+                    fob.write(device.msl)
+            except ValueError:
+                device.msl = None
+                print("MSL should be all numeric digits. Try again!")
+                assign_msl(devices, msl_file=msl_file)
+
+
 def init_devices():
     """ initialize plugged-in devices and assign test plans """
     cmds = [Adb(device) for device in devicelist()]
@@ -192,6 +218,7 @@ def init_devices():
         cmd.testplan = dial_codes['All'] + dial_codes[cmd.alpha[0]]
         print("Carrier: {}".format(cmd.alpha[0]))
         cmd.gen = (c for c in cmd.testplan)
+    assign_msl(cmds)
     return cmds
 
 
@@ -214,6 +241,17 @@ def download_all_pics(cmd_objects):
             ask(cmd_instance.download(localname))
 
 
+def examine_screen(device, photo="temp.png"):
+    """ find locations of text in a screen shot"""
+    ask(device.screenshot(photo))
+    pic_on_device_path = device.pic_paths[-1].split("/")[-1]
+    ask(device.download(pic_on_device_path))
+    print("obtaining {}".format(pic_on_device_path))
+    time.sleep(1)
+    print("download wait over, starting scry()...")
+    return scry(os.path.join(device.outputdir, pic_on_device_path))
+
+
 if __name__ == "__main__":
     cmds = init_devices()
 
@@ -227,9 +265,6 @@ if __name__ == "__main__":
         print("homescreen {} {}".format(cmd.alpha, cmd.device))
         ask(cmd.screenshot("homescreen.png"))
 
-    # download all pics (icon-finder will use soon)
-    download_all_pics(cmds)
-
     # Notification Tray
     for cmd in cmds:
         print("Notification Tray for {} {}".format(cmd.alpha, cmd.device))
@@ -241,7 +276,7 @@ if __name__ == "__main__":
     # app tray
     for cmd in cmds:
         print("App Tray for {} {}".format(cmd.alpha, cmd.device))
-        screen_fn = cmd.pc_pics("homescreen")
+        screen_fn = cmd.pc_pics("homescreen.png")
         icon_fn = os.path.join(cmd.icon_dir, 'apps_tiny.png')
         homescreen(cmd)
         x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)
@@ -260,13 +295,21 @@ if __name__ == "__main__":
     # playstore
     for cmd in cmds:
         print("playstore for {} {}".format(cmd.alpha, cmd.device))
-        screen_fn = cmd.pc_pics("homescreen")
+        screen_fn = cmd.pc_pics("homescreen.png")
         icon_fn = os.path.join(cmd.icon_dir, 'playstore_tiny.png')
         homescreen(cmd)
         x, y = iconograph(screen_fn, icon_fn)
         ask(cmd.tap(x, y))
         time.sleep(3)
-        ask(cmd.screenshot("playstore.png"))
+        texts = examine_screen(cmd)
+        for t in texts:
+            if "ACCEPT" in t.text:
+                ask(cmd.tap(t.center_x, t.center_y))
+                print("ACCEPT!!!")
+
+        for t in texts:
+            if "your account" in " ".join(t.text).lower():
+                print("YAYAY")
 
     # download all pics
     download_all_pics(cmds)

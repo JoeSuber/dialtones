@@ -20,7 +20,7 @@ class Keeper(object):
 
 def scry(img_path):
     """ return the coordinates associated with a list of text-words found at each unique spot in an image """
-    img = cv2.imread(pic, cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
     patch_path = os.path.join(picsdir, "patch.png")
     contour_min_size = int(img.size * 0.0005)
     contour_max_size = int(img.size * 0.1)
