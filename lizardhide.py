@@ -203,6 +203,21 @@ def assign_msl(devices, msl_file="_msl.txt"):
                 assign_msl(devices, msl_file=msl_file)
 
 
+def get_email_info():
+    email_path = os.path.join(os.getcwd(), "tester_email_info.txt")
+    if os.path.exists(email_path):
+        with open(email_path, "r") as efob:
+            email = efob.readline()
+            password = efob.readline()
+        return email, password
+    print("*>*>*>*>*  test email account needed!  *<*<*<*<*<*<")
+    email = input("Please input the full email account for testing: ")
+    password = input("Please input the password for this account: ")
+    print("\\n Thank you. If you need to change it, delete this file: {}".format(email_path))
+    with open(email_path, "w") as efob:
+        efob.writelines([email, password])
+
+
 def init_devices():
     """ initialize plugged-in devices and assign test plans """
     cmds = [Adb(device) for device in devicelist()]
@@ -241,15 +256,18 @@ def download_all_pics(cmd_objects):
             ask(cmd_instance.download(localname))
 
 
-def examine_screen(device, photo="temp.png"):
+def examine_screen(device, searched_for_text, photo="temp.png"):
     """ find locations of text in a screen shot"""
     ask(device.screenshot(photo))
     pic_on_device_path = device.pic_paths[-1].split("/")[-1]
     ask(device.download(pic_on_device_path))
-    print("obtaining {}".format(pic_on_device_path))
-    time.sleep(1)
-    print("download wait over, starting scry()...")
-    return scry(os.path.join(device.outputdir, pic_on_device_path))
+    time.sleep(0.8)
+    texts = scry(os.path.join(device.outputdir, pic_on_device_path))
+    for t in texts:
+        if searched_for_text in " ".join(t.text):
+            return t.center_x, t.center_y
+    print("'{}' not found!".format(searched_for_text))
+    return None, None
 
 
 if __name__ == "__main__":
@@ -292,6 +310,9 @@ if __name__ == "__main__":
         for n in range(3):  # move it back to page 1
             ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
 
+    #contact list
+
+
     # playstore
     for cmd in cmds:
         print("playstore for {} {}".format(cmd.alpha, cmd.device))
@@ -301,15 +322,25 @@ if __name__ == "__main__":
         x, y = iconograph(screen_fn, icon_fn)
         ask(cmd.tap(x, y))
         time.sleep(3)
-        texts = examine_screen(cmd)
-        for t in texts:
-            if "ACCEPT" in t.text:
-                ask(cmd.tap(t.center_x, t.center_y))
-                print("ACCEPT!!!")
 
-        for t in texts:
-            if "your account" in " ".join(t.text).lower():
-                print("YAYAY")
+        x, y = examine_screen(cmd, "ACCEPT")
+        if x is not None:
+            ask(cmd.tap(x, y))
+
+    for cmd in cmds:
+        setups = []
+        x, y = examine_screen(cmd, "Email or phone")
+        if x is not None:
+            setups.append(cmd)
+            ask(cmd.tap(x, y))
+            ask(cmd.text("dvtandctest@gmail.com"))
+            ask(cmd.enter_key())
+            # enter the email info
+        else:
+            ask(cmd.screenshot("appstore.png"))
+    for cmd in setups:
+        ask(cmd.screenshot("appstore.png"))
+
 
     # download all pics
     download_all_pics(cmds)
