@@ -203,19 +203,19 @@ def assign_msl(devices, msl_file="_msl.txt"):
                 assign_msl(devices, msl_file=msl_file)
 
 
-def get_email_info():
-    email_path = os.path.join(os.getcwd(), "tester_email_info.txt")
+def get_email_info(acct_name="testing_email_info.txt"):
+    email_path = os.path.join(os.getcwd(), acct_name)
     if os.path.exists(email_path):
         with open(email_path, "r") as efob:
-            email = efob.readline()
-            password = efob.readline()
+            email, password = efob.readline().split("::")
         return email, password
-    print("*>*>*>*>*  test email account needed!  *<*<*<*<*<*<")
+    print("*>*>*>*>*  Test Email Account Needed!  *<*<*<*<*<*<")
     email = input("Please input the full email account for testing: ")
     password = input("Please input the password for this account: ")
-    print("\\n Thank you. If you need to change it, delete this file: {}".format(email_path))
+    print("\n Thank you. If you need to change it, delete this file--> {}".format(email_path))
     with open(email_path, "w") as efob:
-        efob.writelines([email, password])
+        efob.write(email + "::" + password)
+    return email, password
 
 
 def init_devices():
@@ -242,7 +242,7 @@ def homescreen(cmd_instance):
     ask(cmd_instance.home)
     ask(cmd_instance.swipe(0.1, 0.8, 0.9, 0.8))     # swipe right
     ask(cmd_instance.home)
-    time.sleep(0.8)
+    time.sleep(0.5)
 
 
 def download_all_pics(cmd_objects):
@@ -257,7 +257,7 @@ def download_all_pics(cmd_objects):
 
 
 def examine_screen(device, searched_for_text, photo="temp.png"):
-    """ find locations of text in a screen shot"""
+    """ find location of a particular bit of text in a screen shot"""
     ask(device.screenshot(photo))
     pic_on_device_path = device.pic_paths[-1].split("/")[-1]
     ask(device.download(pic_on_device_path))
@@ -266,14 +266,18 @@ def examine_screen(device, searched_for_text, photo="temp.png"):
     for t in texts:
         if searched_for_text in " ".join(t.text):
             return t.center_x, t.center_y
-    print("'{}' not found!".format(searched_for_text))
+    print("'{}' not found on {}".format(searched_for_text, device.device))
     return None, None
 
-
+##################################################
+###########  Scripts for Chameleon ###############
+##################################################
 if __name__ == "__main__":
     cmds = init_devices()
+    email, password = get_email_info()
 
     # home screens
+    print("## homescreen and homefront pics ##")
     for cmd in cmds:
         ask(cmd.home)
         time.sleep(0.8)
@@ -283,7 +287,10 @@ if __name__ == "__main__":
         print("homescreen {} {}".format(cmd.alpha, cmd.device))
         ask(cmd.screenshot("homescreen.png"))
 
+    download_all_pics(cmds)
+
     # Notification Tray
+    print("## notification trays ##")
     for cmd in cmds:
         print("Notification Tray for {} {}".format(cmd.alpha, cmd.device))
         homescreen(cmd)
@@ -292,10 +299,14 @@ if __name__ == "__main__":
         ask(cmd.screenshot("notificationtray.png"))
 
     # app tray
+    print("## App Trays ##")
     for cmd in cmds:
         print("App Tray for {} {}".format(cmd.alpha, cmd.device))
         screen_fn = cmd.pc_pics("homescreen.png")
+
+        print(screen_fn)
         icon_fn = os.path.join(cmd.icon_dir, 'apps_tiny.png')
+        ask(cmd.download(screen_fn.split("/")[-1]))
         homescreen(cmd)
         x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)
         time.sleep(1)       # wait for home screen
@@ -304,16 +315,32 @@ if __name__ == "__main__":
         for n in range(3):  # move it back to page 1
             ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
         for n in range(3):
-            time.sleep(0.8)   # wait for app tray
+            time.sleep(0.4)   # wait for app tray
             ask(cmd.screenshot("apptray-{}.png".format(n)))
             ask(cmd.swipe(0.9, 0.8, 0.1, 0.8))
         for n in range(3):  # move it back to page 1
             ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
 
     #contact list
-
+    print("## Contacts ##")
+    for cmd in cmds:
+        homescreen(cmd)
+        x, y = examine_screen(cmd, "Messages")
+        if (x is None) or (y is None):
+            print("!!! device {} is lacking a 'Messages' button! breaking !!!")
+            homescreen(cmd)
+            exit(1)
+        ask(cmd.tap(x, y))
+    for cmd in cmds:
+        x, y = examine_screen(cmd, "CONTACTS")
+        if x and y:
+            ask(cmd.tap(x, y))
+    for cmd in cmds:
+        ask(cmd.screenshot("Contacts.png"))
+        homescreen(cmd)
 
     # playstore
+    print("## Playstore ##")
     for cmd in cmds:
         print("playstore for {} {}".format(cmd.alpha, cmd.device))
         screen_fn = cmd.pc_pics("homescreen.png")
@@ -321,28 +348,34 @@ if __name__ == "__main__":
         homescreen(cmd)
         x, y = iconograph(screen_fn, icon_fn)
         ask(cmd.tap(x, y))
-        time.sleep(3)
-
+        time.sleep(2)
         x, y = examine_screen(cmd, "ACCEPT")
         if x is not None:
             ask(cmd.tap(x, y))
-
-    for cmd in cmds:
-        setups = []
+    setups = []
+    for cmd in cmds:        # look for email asker
         x, y = examine_screen(cmd, "Email or phone")
         if x is not None:
             setups.append(cmd)
             ask(cmd.tap(x, y))
-            ask(cmd.text("dvtandctest@gmail.com"))
+            ask(cmd.text(email))
             ask(cmd.enter_key())
-            # enter the email info
         else:
             ask(cmd.screenshot("appstore.png"))
+
+    for cmd in setups:      # look for password asker
+        x, y = examine_screen(cmd, "Password")
+        ask(cmd.tap(x, y))
+        ask(cmd.text(password))
+        ask(cmd.enter_key())
+
     for cmd in setups:
         ask(cmd.screenshot("appstore.png"))
 
 
+
     # download all pics
+    print("## downloading all pics ##")
     download_all_pics(cmds)
 
 """
