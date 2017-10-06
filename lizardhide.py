@@ -123,7 +123,7 @@ class Adb(object):
         return self.pull + ["/sdcard/" + pic_name, self.outputdir]
 
     def pc_pics(self, keyword):
-        localpic = [os.path.join(self.outputdir, fn.split("/")[-1]) for fn in cmd.pic_paths
+        localpic = [os.path.join(self.outputdir, fn.split("/")[-1]) for fn in self.pic_paths
                     if (keyword in fn) and (self.device in fn)]
         if len(localpic) > 1:
             print("Warning! Multiple pics include '{}' in dir: {}".format(keyword, self.outputdir))
@@ -245,15 +245,14 @@ def homescreen(cmd_instance):
     time.sleep(0.5)
 
 
-def download_all_pics(cmd_objects):
-    """ gets all the pics from paths stored in each local device-instance.
+def download_all_pics(cmd_instance):
+    """ gets all the pics from paths stored in local device-instance.
     DOES NOT check the the actual device's storage areas! """
-    for cmd_instance in cmd_objects:
-        print("downloading pics for {} {}:".format(cmd_instance.OEM, cmd_instance.device))
-        for path in cmd_instance.pic_paths:
-            localname = path.split("/")[-1]
-            print("-    {}".format(localname))
-            ask(cmd_instance.download(localname))
+    print("downloading pics for {} {}:".format(cmd_instance.OEM, cmd_instance.device))
+    for path in cmd_instance.pic_paths:
+        localname = path.split("/")[-1]
+        print("-    {}".format(localname))
+        ask(cmd_instance.download(localname))
 
 
 def examine_screen(device, searched_for_text, photo="temp.png"):
@@ -276,51 +275,47 @@ if __name__ == "__main__":
     cmds = init_devices()
     email, password = get_email_info()
 
-    # home screens
-    print("## homescreen and homefront pics ##")
-    for cmd in cmds:
-        ask(cmd.home)
+    for dev in cmds:
+
+        print("Working on Device: {}".format(dev.device))
+
+        ask(dev.home)
         time.sleep(0.8)
-        print("homefront {} {}".format(cmd.alpha, cmd.device))
-        ask(cmd.screenshot("homefront.png"))
-        homescreen(cmd)
-        print("homescreen {} {}".format(cmd.alpha, cmd.device))
-        ask(cmd.screenshot("homescreen.png"))
+        print("homefront {} {}".format(dev.alpha, dev.device))
+        ask(dev.screenshot("homefront.png"))
+        homescreen(dev)
+        print("homescreen {} {}".format(dev.alpha, dev.device))
+        ask(dev.screenshot("homescreen.png"))
 
-    download_all_pics(cmds)
+        download_all_pics(dev)
 
-    # Notification Tray
-    print("## notification trays ##")
-    for cmd in cmds:
-        print("Notification Tray for {} {}".format(cmd.alpha, cmd.device))
-        homescreen(cmd)
-        ask(cmd.swipe(0.5, 0.01, 0.5, 0.8))     # swipe down from top
+        print("Notification Tray for {} {}".format(dev.alpha, dev.device))
+        homescreen(dev)
+        ask(dev.swipe(0.5, 0.01, 0.5, 0.8))     # swipe down from top
         time.sleep(1)
-        ask(cmd.screenshot("notificationtray.png"))
+        ask(dev.screenshot("notificationtray.png"))
 
-    # app tray
-    print("## App Trays ##")
-    for cmd in cmds:
-        print("App Tray for {} {}".format(cmd.alpha, cmd.device))
-        screen_fn = cmd.pc_pics("homescreen.png")
+        # app tray
+        print("App Tray for {} {}".format(dev.alpha, dev.device))
+        screen_fn = dev.pc_pics("homescreen.png")
 
         print(screen_fn)
-        icon_fn = os.path.join(cmd.icon_dir, 'apps_tiny.png')
-        ask(cmd.download(screen_fn.split("/")[-1]))
-        homescreen(cmd)
+        icon_fn = os.path.join(dev.icon_dir, 'apps_tiny.png')
+        ask(dev.download(screen_fn.split("/")[-1]))
+        homescreen(dev)
         x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)
         time.sleep(1)       # wait for home screen
-        ask(cmd.tap(x, y))
+        ask(dev.tap(x, y))
         time.sleep(1)       # change screens
         for n in range(3):  # move it back to page 1
-            ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
+            ask(dev.swipe(0.1, 0.8, 0.9, 0.8))
         for n in range(3):
             time.sleep(0.4)   # wait for app tray
-            ask(cmd.screenshot("apptray-{}.png".format(n)))
-            ask(cmd.swipe(0.9, 0.8, 0.1, 0.8))
+            ask(dev.screenshot("apptray-{}.png".format(n)))
+            ask(dev.swipe(0.9, 0.8, 0.1, 0.8))
         for n in range(3):  # move it back to page 1
-            ask(cmd.swipe(0.1, 0.8, 0.9, 0.8))
-
+            ask(dev.swipe(0.1, 0.8, 0.9, 0.8))
+"""
     #contact list
     print("## Contacts ##")
     for cmd in cmds:
@@ -377,7 +372,7 @@ if __name__ == "__main__":
     # download all pics
     print("## downloading all pics ##")
     download_all_pics(cmds)
-
+"""
 """
     # run ADCs and call-intercepts
     while True:
