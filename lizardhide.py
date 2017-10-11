@@ -250,6 +250,7 @@ def download_all_pics(cmd_instance):
     DOES NOT check the the actual device's storage areas! """
     print("downloading pics for {} {}:".format(cmd_instance.OEM, cmd_instance.device))
     for path in cmd_instance.pic_paths:
+        print(path)
         localname = path.split("/")[-1]
         print("-    {}".format(localname))
         ask(cmd_instance.download(localname))
@@ -315,64 +316,57 @@ if __name__ == "__main__":
             ask(dev.swipe(0.9, 0.8, 0.1, 0.8))
         for n in range(3):  # move it back to page 1
             ask(dev.swipe(0.1, 0.8, 0.9, 0.8))
-"""
-    #contact list
-    print("## Contacts ##")
-    for cmd in cmds:
-        homescreen(cmd)
-        x, y = examine_screen(cmd, "Messages")
+
+
+        print("## Contacts ##")
+        homescreen(dev)
+        x, y = examine_screen(dev, "Messages")
         if (x is None) or (y is None):
             print("!!! device {} is lacking a 'Messages' button! breaking !!!")
-            homescreen(cmd)
+            homescreen(dev)
             exit(1)
-        ask(cmd.tap(x, y))
-    for cmd in cmds:
-        x, y = examine_screen(cmd, "CONTACTS")
+        ask(dev.tap(x, y))
+
+        x, y = examine_screen(dev, "CONTACTS")
         if x and y:
-            ask(cmd.tap(x, y))
-    for cmd in cmds:
-        ask(cmd.screenshot("Contacts.png"))
-        homescreen(cmd)
+            ask(dev.tap(x, y))
 
-    # playstore
-    print("## Playstore ##")
-    for cmd in cmds:
-        print("playstore for {} {}".format(cmd.alpha, cmd.device))
-        screen_fn = cmd.pc_pics("homescreen.png")
-        icon_fn = os.path.join(cmd.icon_dir, 'playstore_tiny.png')
-        homescreen(cmd)
+        ask(dev.screenshot("Contacts.png"))
+        homescreen(dev)
+
+        # playstore
+        print("## Playstore ##")
+        print("playstore for {} {}".format(dev.alpha, dev.device))
+        screen_fn = dev.pc_pics("homescreen.png")
+        icon_fn = os.path.join(dev.icon_dir, 'playstore_tiny.png')
+        homescreen(dev)
         x, y = iconograph(screen_fn, icon_fn)
-        ask(cmd.tap(x, y))
+        ask(dev.tap(x, y))
         time.sleep(2)
-        x, y = examine_screen(cmd, "ACCEPT")
+        x, y = examine_screen(dev, "ACCEPT")
         if x is not None:
-            ask(cmd.tap(x, y))
-    setups = []
-    for cmd in cmds:        # look for email asker
-        x, y = examine_screen(cmd, "Email or phone")
+            ask(dev.tap(x, y))
+
+        x, y = examine_screen(dev, "Email or phone")
         if x is not None:
-            setups.append(cmd)
-            ask(cmd.tap(x, y))
-            ask(cmd.text(email))
-            ask(cmd.enter_key())
+            ask(dev.tap(x, y))
+            ask(dev.text(email))
+            ask(dev.enter_key())
         else:
-            ask(cmd.screenshot("appstore.png"))
-
-    for cmd in setups:      # look for password asker
-        x, y = examine_screen(cmd, "Password")
-        ask(cmd.tap(x, y))
-        ask(cmd.text(password))
-        ask(cmd.enter_key())
-
-    for cmd in setups:
-        ask(cmd.screenshot("appstore.png"))
+            ask(dev.screenshot("appstore.png"))
 
 
+        x, y = examine_screen(dev, "Password")
+        ask(dev.tap(x, y))
+        ask(dev.text(password))
+        ask(dev.enter_key())
 
-    # download all pics
-    print("## downloading all pics ##")
-    download_all_pics(cmds)
-"""
+        ask(dev.screenshot("appstore.png"))
+
+        # download all pics
+        print("## downloading all pics from device ##")
+        download_all_pics(dev)
+
 """
     # run ADCs and call-intercepts
     while True:
