@@ -20,26 +20,6 @@ Signature EMail - Yahoo Royals2406 royals06 (settings of email)dvtandctest/donot
 Play Store - OEM Logo (No logo whne Wholesale and inactive)
 Gallery
 
-psuedo:
-
-- setup -
-detect devices
-for each device detect carrier
-based on carrier, use chamcodes to assign appropriate testing regime to each device
-check each device for apk installation
-if needed, locate local apk and install to device
-    find local apk filename
-create local screenshot directory
-create local test-results directory
-create and assign filenames for each test result and screenshot
-
-- begin testing -
-dial the test
-wait for connect (or timeout)
-check response
-take screenshot
-
--- parse results --
 
 http://adbshell.com/commands
 http://sprintdd.com/android/chameleon/
