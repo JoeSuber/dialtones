@@ -347,6 +347,7 @@ if __name__ == "__main__":
         print("## downloading all pics from device ##")
         download_all_pics(dev)
 
+
 """
     # run ADCs and call-intercepts
     while True:
