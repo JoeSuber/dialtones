@@ -100,7 +100,8 @@ class Adb(object):
 
     def download(self, pic_name):
         """ note pic_name should have the device and OEM built into it's front """
-        return self.pull + ["/sdcard/" + pic_name, self.outputdir]
+        return self.pull + ["/sdcard/" + self.device + "_" + self.OEM + "_" + self.alpha[0] + "_" + pic_name,
+                            self.outputdir]
 
     def pc_pics(self, keyword):
         localpic = [os.path.join(self.outputdir, fn.split("/")[-1]) for fn in self.pic_paths
@@ -267,7 +268,7 @@ if __name__ == "__main__":
         homescreen(dev)
         print("homescreen {} {}".format(dev.alpha, dev.device))
         ask(dev.screenshot("homescreen.png"))
-
+        """
         download_all_pics(dev)
 
         print("Notification Tray for {} {}".format(dev.alpha, dev.device))
@@ -323,6 +324,7 @@ if __name__ == "__main__":
         x, y = iconograph(screen_fn, icon_fn)
         ask(dev.tap(x, y))
         time.sleep(2)
+
         x, y = examine_screen(dev, "ACCEPT")
         if x is not None:
             ask(dev.tap(x, y))
@@ -335,18 +337,86 @@ if __name__ == "__main__":
         else:
             ask(dev.screenshot("appstore.png"))
 
-
         x, y = examine_screen(dev, "Password")
         ask(dev.tap(x, y))
         ask(dev.text(password))
         ask(dev.enter_key())
 
         ask(dev.screenshot("appstore.png"))
+        """
+        ### Legal Info Screens ###
+
+        homescreen(dev)
+        ask(dev.swipe(0.5, 0.01, 0.5, 0.8))
+        icon_fn = os.path.join(dev.icon_dir, 'gear_tiny.png')
+        ask(dev.screenshot("gear.png"))
+        screen_fn = dev.pc_pics("gear.png")
+        ask(dev.download("gear.png"))
+        print(screen_fn)
+        time.sleep(2)
+        x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)
+        ask(dev.tap(x, y))
+        print("tapped 'gear' at: x={}, y={}".format(x,y))
+        ask(dev.swipe(0.5, 0.8, 0.5, 0.1))
+        ask(dev.screenshot("about_device.png"))
+        ask(dev.download("about_device.png"))
+        x, y = examine_screen(dev, "about")
+        if x is None:
+            ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
+            ask(dev.screenshot("about_device.png"))
+            ask(dev.download("about_device.png"))
+            x, y = examine_screen(dev, "about")
+
+        print("'About device' at: {}, {}".format(x,y))
+        if x is not None:
+            dev.tap(x, y)
+        else:
+            print("About Device not found!!!!")
+
+        ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
+        ask(dev.screenshot("legal_info.png"))
+        ask(dev.download("legal_info.png"))
+        x, y = examine_screen(dev, "legal")
+        if x is not None:
+            dev.tap(x, y)
+        else:
+            print("Legal information not found!!!")
+
+        ask(dev.screenshot("privacy.png"))
+        ask(dev.download("privacy.png"))
+        x, y = examine_screen(dev, "privacy")
+        if x is not None:
+            dev.tap(x, y)
+        else:
+            print("Privacy Alert not found!!!!")
+
+        ask(dev.screenshot("privacy_proceed.png"))
+        ask(dev.download("privacy_proceed.png"))
+        x, y = examine_screen(dev, "proceed")
+        if x is not None:
+            dev.tap(x, y)
+        else:
+            print("privacy 'PROCEED' not found!!!")
+
+        ask(dev.screenshot("privacy_alert_p1.png"))
+        ask(dev.download("privacy_alert_p1.png"))
+        ask(dev.swipe(0.5, 0.8, 0.5, 0.1))
+        ask(dev.screenshot("privacy_alert_p2.png"))
+        ask(dev.download("privacy_alert_p2.png"))
+        x, y = examine_screen(dev, "OK")
+        if x is not None:
+            dev.tap(x, y)
+        else:
+            print("couldn't find 'OK' on legal privacy screen!!!")
+
+        homescreen(dev)
+        homescreen(dev)
+
+
 
         # download all pics
         print("## downloading all pics from device ##")
         download_all_pics(dev)
-
 
 """
     # run ADCs and call-intercepts
