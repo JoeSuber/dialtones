@@ -106,9 +106,6 @@ class Adb(object):
     def pc_pics(self, keyword):
         localpic = [os.path.join(self.outputdir, fn.split("/")[-1]) for fn in self.pic_paths
                     if (keyword in fn) and (self.device in fn)]
-        if len(localpic) > 1:
-            print("Warning! Multiple pics include '{}' in dir: {}".format(keyword, self.outputdir))
-            return []
         return localpic[0]
 
     def text(self, txt):
