@@ -245,6 +245,7 @@ def examine_screen(device, searched_for_text, photo="temp.png"):
     time.sleep(0.8)
     texts = scry(os.path.join(device.outputdir, pic_on_device_path))
     for t in texts:
+        print(t.text)
         if searched_for_text in " ".join(t.text):
             return t.center_x, t.center_y
     print("'{}' not found on {}".format(searched_for_text, device.device))
@@ -258,33 +259,32 @@ if __name__ == "__main__":
     email, password = get_email_info()
 
     for dev in cmds:
-
         print("Working on Device: {}".format(dev.device))
-
         ask(dev.home)
         time.sleep(0.8)
         print("homefront {} {}".format(dev.alpha, dev.device))
         ask(dev.screenshot("homefront.png"))
+        ask(dev.download("homefront.png"))
+
         homescreen(dev)
+        ask(dev.swipe(0.2, 0.8, 0.9, 0.8))
         print("homescreen {} {}".format(dev.alpha, dev.device))
         ask(dev.screenshot("homescreen.png"))
-        """
-        download_all_pics(dev)
+        ask(dev.download("homescreen.png"))
 
         print("Notification Tray for {} {}".format(dev.alpha, dev.device))
         homescreen(dev)
         ask(dev.swipe(0.5, 0.01, 0.5, 0.8))     # swipe down from top
         time.sleep(1)
         ask(dev.screenshot("notificationtray.png"))
+        ask(dev.download("notificationtray.png"))
 
         # app tray
         print("App Tray for {} {}".format(dev.alpha, dev.device))
         screen_fn = dev.pc_pics("homescreen.png")
-
-        print(screen_fn)
-        icon_fn = os.path.join(dev.icon_dir, 'apps_tiny.png')
-        ask(dev.download(screen_fn.split("/")[-1]))
         homescreen(dev)
+        print("checking local pic:  {}".format(screen_fn))
+        icon_fn = os.path.join(dev.icon_dir, 'apps_tiny.png')
         x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)
         time.sleep(1)       # wait for home screen
         ask(dev.tap(x, y))
@@ -294,6 +294,7 @@ if __name__ == "__main__":
         for n in range(3):
             time.sleep(0.4)   # wait for app tray
             ask(dev.screenshot("apptray-{}.png".format(n)))
+            ask(dev.download("apptray-{}.png".format(n)))
             ask(dev.swipe(0.9, 0.8, 0.1, 0.8))
         for n in range(3):  # move it back to page 1
             ask(dev.swipe(0.1, 0.8, 0.9, 0.8))
@@ -301,57 +302,71 @@ if __name__ == "__main__":
 
         print("## Contacts ##")
         homescreen(dev)
-        x, y = examine_screen(dev, "Messages")
+        x, y = examine_screen(dev, "Messages", photo="homescreen.png")
         if (x is None) or (y is None):
             print("!!! device {} is lacking a 'Messages' button! breaking !!!")
             homescreen(dev)
             exit(1)
         ask(dev.tap(x, y))
-
-        x, y = examine_screen(dev, "CONTACTS")
+        print(" -- first contact screen...")
+        ask(dev.screenshot("msg_contacts.png"))
+        ask(dev.download("msg_contacts.png"))
+        x, y = examine_screen(dev, "CONTACTS", photo="msg_contacts.png")
         if x and y:
             ask(dev.tap(x, y))
-
+        print(" -- target contact screen")
         ask(dev.screenshot("Contacts.png"))
+        ask(dev.download("Contacts.png"))
+        time.sleep(1)
         homescreen(dev)
 
         # playstore
         print("## Playstore ##")
         print("playstore for {} {}".format(dev.alpha, dev.device))
         screen_fn = dev.pc_pics("homescreen.png")
+        print(screen_fn)
         icon_fn = os.path.join(dev.icon_dir, 'playstore_tiny.png')
         homescreen(dev)
         x, y = iconograph(screen_fn, icon_fn)
         ask(dev.tap(x, y))
-        time.sleep(2)
+        ask(dev.screenshot("googly.png"))
+        ask(dev.download("googly.png"))
+        time.sleep(1)
 
-        x, y = examine_screen(dev, "ACCEPT")
+        x, y = examine_screen(dev, "ACCEPT", photo="googly.png")
         if x is not None:
             ask(dev.tap(x, y))
+        ask(dev.screenshot("accept.png"))
+        ask(dev.download("accept.png"))
 
-        x, y = examine_screen(dev, "Email or phone")
+        x, y = examine_screen(dev, "Email or phone", photo="accept.png")
         if x is not None:
             ask(dev.tap(x, y))
             ask(dev.text(email))
             ask(dev.enter_key())
         else:
             ask(dev.screenshot("appstore.png"))
+            ask(dev.download("appstore.png"))
 
-        x, y = examine_screen(dev, "Password")
+        ask(dev.screenshot("password.png"))
+        ask(dev.download("password.png"))
+        x, y = examine_screen(dev, "Password", photo="password.png")
         ask(dev.tap(x, y))
         ask(dev.text(password))
         ask(dev.enter_key())
 
         ask(dev.screenshot("appstore.png"))
-        """
-        ### Legal Info Screens ###
+        ask(dev.download("appstore.png"))
 
+        ### Legal Info Screens ###
+        print("## Legal Info ##")
+        print("Legal info for {} {}".format(dev.alpha, dev.device))
         homescreen(dev)
-        ask(dev.swipe(0.5, 0.01, 0.5, 0.8))
+        ask(dev.swipe(0.5, 0.01, 0.5, 0.8)) #swipe down the app tray
         icon_fn = os.path.join(dev.icon_dir, 'gear_tiny.png')
         ask(dev.screenshot("gear.png"))
-        screen_fn = dev.pc_pics("gear.png")
         ask(dev.download("gear.png"))
+        screen_fn = dev.pc_pics("gear.png")
         print(screen_fn)
         time.sleep(2)
         x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)
@@ -360,12 +375,12 @@ if __name__ == "__main__":
         ask(dev.swipe(0.5, 0.8, 0.5, 0.1))
         ask(dev.screenshot("about_device.png"))
         ask(dev.download("about_device.png"))
-        x, y = examine_screen(dev, "about")
+        x, y = examine_screen(dev, "about", photo="about_device.png")
         if x is None:
             ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
             ask(dev.screenshot("about_device.png"))
             ask(dev.download("about_device.png"))
-            x, y = examine_screen(dev, "about")
+            x, y = examine_screen(dev, "about", photo="about_device.png")
 
         print("'About device' at: {}, {}".format(x,y))
         if x is not None:
@@ -376,7 +391,7 @@ if __name__ == "__main__":
         ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
         ask(dev.screenshot("legal_info.png"))
         ask(dev.download("legal_info.png"))
-        x, y = examine_screen(dev, "legal")
+        x, y = examine_screen(dev, "legal", photo="legal_info.png")
         if x is not None:
             dev.tap(x, y)
         else:
@@ -384,7 +399,7 @@ if __name__ == "__main__":
 
         ask(dev.screenshot("privacy.png"))
         ask(dev.download("privacy.png"))
-        x, y = examine_screen(dev, "privacy")
+        x, y = examine_screen(dev, "privacy", photo="privacy.png")
         if x is not None:
             dev.tap(x, y)
         else:
@@ -392,7 +407,7 @@ if __name__ == "__main__":
 
         ask(dev.screenshot("privacy_proceed.png"))
         ask(dev.download("privacy_proceed.png"))
-        x, y = examine_screen(dev, "proceed")
+        x, y = examine_screen(dev, "proceed", photo="privacy_proceed.png")
         if x is not None:
             dev.tap(x, y)
         else:
@@ -403,7 +418,7 @@ if __name__ == "__main__":
         ask(dev.swipe(0.5, 0.8, 0.5, 0.1))
         ask(dev.screenshot("privacy_alert_p2.png"))
         ask(dev.download("privacy_alert_p2.png"))
-        x, y = examine_screen(dev, "OK")
+        x, y = examine_screen(dev, "OK", photo="privacy_alert_p2.png")
         if x is not None:
             dev.tap(x, y)
         else:
@@ -412,13 +427,12 @@ if __name__ == "__main__":
         homescreen(dev)
         homescreen(dev)
 
-
+"""
 
         # download all pics
         print("## downloading all pics from device ##")
         download_all_pics(dev)
 
-"""
     # run ADCs and call-intercepts
     while True:
         devices_finished = 0
@@ -456,4 +470,4 @@ if __name__ == "__main__":
         if devices_finished >= num:
             print(" ****   all done!  ****")
             break
-"""
+    """
