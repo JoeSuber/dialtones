@@ -242,7 +242,7 @@ def examine_screen(device, searched_for_text, photo="temp.png"):
     time.sleep(0.8)
     texts = scry(os.path.join(device.outputdir, pic_on_device_path))
     for t in texts:
-        print(t.text)
+        # print(t.text)
         if searched_for_text in " ".join(t.text):
             return t.center_x, t.center_y
     print("'{}' not found on {}".format(searched_for_text, device.device))
@@ -305,6 +305,7 @@ if __name__ == "__main__":
             homescreen(dev)
             exit(1)
         ask(dev.tap(x, y))
+        time.sleep(1.5)
         print(" -- first contact screen...")
         ask(dev.screenshot("msg_contacts.png"))
         ask(dev.download("msg_contacts.png"))
@@ -328,16 +329,19 @@ if __name__ == "__main__":
         ask(dev.tap(x, y))
         ask(dev.screenshot("googly.png"))
         ask(dev.download("googly.png"))
-        time.sleep(1)
+        time.sleep(0.5)
 
         x, y = examine_screen(dev, "ACCEPT", photo="googly.png")
         if x is not None:
             ask(dev.tap(x, y))
+        else:
+            print("No ACCEPT found")
         ask(dev.screenshot("accept.png"))
         ask(dev.download("accept.png"))
 
-        x, y = examine_screen(dev, "Email or phone", photo="accept.png")
+        x, y = examine_screen(dev, "Email", photo="accept.png")
         if x is not None:
+            print("entering email: {}".format(email))
             ask(dev.tap(x, y))
             ask(dev.text(email))
             ask(dev.enter_key())
@@ -377,7 +381,7 @@ if __name__ == "__main__":
             ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
             ask(dev.screenshot("about_device.png"))
             ask(dev.download("about_device.png"))
-            x, y = examine_screen(dev, "about", photo="about_device.png")
+            x, y = examine_screen(dev, "About", photo="about_device.png")
 
         print("'About device' at: {}, {}".format(x,y))
         if x is not None:
@@ -385,7 +389,7 @@ if __name__ == "__main__":
         else:
             print("About Device not found!!!!")
 
-        ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
+        # ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
         ask(dev.screenshot("legal_info.png"))
         ask(dev.download("legal_info.png"))
         x, y = examine_screen(dev, "legal", photo="legal_info.png")
@@ -422,49 +426,15 @@ if __name__ == "__main__":
             print("couldn't find 'OK' on legal privacy screen!!!")
 
         homescreen(dev)
-        homescreen(dev)
 
-"""
-
-        # download all pics
-        print("## downloading all pics from device ##")
-        download_all_pics(dev)
-
+    print(" ###   Call Intercepts ###")
     # run ADCs and call-intercepts
-    while True:
-        devices_finished = 0
-        # activate the next command
-        for num, cmd in enumerate(cmds):
-            if cmd.gen:
-                try:
-                    if not cmd.time_on:
-                        cmd.current_code = cmd.gen.__next__()
-                        print("{}: {} ".format(cmd.device, cmd.current_code))
-                        ask(cmd.dial(cmd.current_code[0]))
-                        cmd.time_on = time.time()
-
-                except Exception as e:
-                    print("device {} {} is done".format(cmd.device, cmd.alpha))
-                    print(e)
-                    cmd.finished = True
-                    devices_finished += 1
-            else:
-                devices_finished += 1
-
-        # use the timer to activate screen shot, download it, and then tear down call
-        for num, cmd in enumerate(cmds):
-            if cmd.gen and (not cmd.finished):
-                current_wait = time.time() - cmd.time_on
-                if current_wait > cmd.delay:
-                    print("tearing down {} cmd: {} pic: {}"
-                          .format(cmd.device, cmd.current_code, cmd.pic_paths[cmd.current_code]))
-                    ask(cmd.screenshot(cmd.current_code, cmd.pic_paths[cmd.current_code], ))
-                    ask(cmd.download(cmd.pic_paths[cmd.current_code]))
-                    ask(cmd.hangup())
-                    cmd.time_on = 0
-
-
-        if devices_finished >= num:
-            print(" ****   all done!  ****")
-            break
-    """
+    if dev.gen and (not dev.finished):
+        current_wait = time.time() - dev.time_on
+        if current_wait > dev.delay:
+            print("tearing down {} cmd: {}"
+                    .format(dev.device, dev.current_code))
+            ask(dev.screenshot(dev.current_code))
+            ask(dev.download(dev.current_code))
+            ask(dev.hangup())
+            dev.time_on = 0
