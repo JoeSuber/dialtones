@@ -234,7 +234,7 @@ def download_all_pics(cmd_instance):
         ask(cmd_instance.download(localname))
 
 
-def examine_screen(device, searched_for_text, photo="temp.png"):
+def examine_screen(device, searched_for_text, photo="temp.png", DEBUG=False):
     """ find location of a particular bit of text in a screen shot"""
     ask(device.screenshot(photo))
     pic_on_device_path = device.pic_paths[-1].split("/")[-1]
@@ -242,7 +242,7 @@ def examine_screen(device, searched_for_text, photo="temp.png"):
     time.sleep(0.8)
     texts = scry(os.path.join(device.outputdir, pic_on_device_path))
     for t in texts:
-        # print(t.text)
+        if DEBUG: print(t.text)
         if searched_for_text in " ".join(t.text):
             return t.center_x, t.center_y
     print("'{}' not found on {}".format(searched_for_text, device.device))
@@ -259,9 +259,10 @@ if __name__ == "__main__":
         print("Working on Device: {}".format(dev.device))
         ask(dev.home)
         time.sleep(0.8)
-        print("homefront {} {}".format(dev.alpha, dev.device))
-        ask(dev.screenshot("homefront.png"))
-        ask(dev.download("homefront.png"))
+
+        print("lockscreen {} {}".format(dev.alpha, dev.device))
+        ask(dev.screenshot("lockscreen.png"))
+        ask(dev.download("lockscreen.png"))
 
         homescreen(dev)
         ask(dev.swipe(0.2, 0.8, 0.9, 0.8))
@@ -376,8 +377,9 @@ if __name__ == "__main__":
         ask(dev.swipe(0.5, 0.8, 0.5, 0.1))
         ask(dev.screenshot("about_device.png"))
         ask(dev.download("about_device.png"))
-        x, y = examine_screen(dev, "about", photo="about_device.png")
+        x, y = examine_screen(dev, "About", photo="about_device.png")
         if x is None:
+            print("looking for 'About' below swipe")
             ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
             ask(dev.screenshot("about_device.png"))
             ask(dev.download("about_device.png"))
@@ -385,24 +387,29 @@ if __name__ == "__main__":
 
         print("'About device' at: {}, {}".format(x,y))
         if x is not None:
-            dev.tap(x, y)
+            print("tapping {}, {}".format(x, y))
+            ask(dev.tap(x, y))
         else:
             print("About Device not found!!!!")
 
-        # ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
+        print("---waiting for legal info tap to materialize----")
+        time.sleep(2)
         ask(dev.screenshot("legal_info.png"))
         ask(dev.download("legal_info.png"))
-        x, y = examine_screen(dev, "legal", photo="legal_info.png")
+        x, y = examine_screen(dev, "Legal information", photo="legal_info.png", DEBUG=True)
         if x is not None:
-            dev.tap(x, y)
+            ask(dev.tap(x, y))
+            time.sleep(0.2)
         else:
             print("Legal information not found!!!")
 
+        print("--privacy--")
         ask(dev.screenshot("privacy.png"))
         ask(dev.download("privacy.png"))
         x, y = examine_screen(dev, "privacy", photo="privacy.png")
         if x is not None:
-            dev.tap(x, y)
+            ask(dev.tap(x, y))
+            time.sleep(0.2)
         else:
             print("Privacy Alert not found!!!!")
 
@@ -410,7 +417,7 @@ if __name__ == "__main__":
         ask(dev.download("privacy_proceed.png"))
         x, y = examine_screen(dev, "proceed", photo="privacy_proceed.png")
         if x is not None:
-            dev.tap(x, y)
+            ask(dev.tap(x, y))
         else:
             print("privacy 'PROCEED' not found!!!")
 
@@ -421,7 +428,7 @@ if __name__ == "__main__":
         ask(dev.download("privacy_alert_p2.png"))
         x, y = examine_screen(dev, "OK", photo="privacy_alert_p2.png")
         if x is not None:
-            dev.tap(x, y)
+            ask(dev.tap(x, y))
         else:
             print("couldn't find 'OK' on legal privacy screen!!!")
 
