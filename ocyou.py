@@ -22,7 +22,7 @@ def whatsay(img_path=None):
 
 
 if __name__ == "__main__":
-    img_path = os.path.join(os.getcwd(), "pics", "43e6ce66_samsung_Sprint-PCS_playstore.png")
+    img_path = os.path.join(os.getcwd(), "pics", "43d2ce46_samsung_Sprint-Prepaid_apptray-0.png")
     print("Text gleaned from: {}".format(img_path))
     print(whatsay(img_path=img_path))
 
