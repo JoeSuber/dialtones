@@ -25,6 +25,13 @@ http://adbshell.com/commands
 http://sprintdd.com/android/chameleon/
 
 # adb shell input keyevent --longpress KEYCODE_L
+
+perhaps we can do some things a little differently.
+
+take screenshot, download, analyze
+
+analysis con
+
 """
 import subprocess
 import time
@@ -258,7 +265,7 @@ if __name__ == "__main__":
     for dev in cmds:
         print("Working on Device: {}".format(dev.device))
         ask(dev.home)
-        time.sleep(0.8)
+        time.sleep(0.5)
 
         print("lockscreen {} {}".format(dev.alpha, dev.device))
         ask(dev.screenshot("lockscreen.png"))

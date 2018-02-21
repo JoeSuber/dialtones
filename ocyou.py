@@ -37,7 +37,7 @@ if __name__ == "__main__":
         what = whatsay(img_path=img)
         print(what)
         wordsets[img] = Levenshtein_search.populate_wordset(n, what)
-        if n > 15:
+        if n > 19:
             break
 
     term = "Camara"
