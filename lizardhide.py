@@ -20,7 +20,6 @@ Signature EMail - Yahoo Royals2406 royals06 (settings of email)dvtandctest/donot
 Play Store - OEM Logo (No logo whne Wholesale and inactive)
 Gallery
 
-
 http://adbshell.com/commands
 http://sprintdd.com/android/chameleon/
 
@@ -31,8 +30,8 @@ perhaps we can do some things a little differently.
 take screenshot, download, analyze
 
 analysis con
-
 """
+
 import subprocess
 import time
 import os
