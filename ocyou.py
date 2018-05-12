@@ -4,7 +4,6 @@ except ImportError:
     from PIL import Image
 import pytesseract
 import os
-import cv2
 import Levenshtein_search
 import re
 

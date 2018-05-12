@@ -35,7 +35,6 @@ analysis con
 import subprocess
 import time
 import os
-import csv
 from chamcodes import dial_codes, carriers
 from psycon import iconograph
 from blobs import scry
