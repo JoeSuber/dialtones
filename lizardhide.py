@@ -119,6 +119,9 @@ class Adb(object):
     def dial(self, code):
         return self.shell + ["am", "start", "-a", "android.intent.action.CALL", "-d", "tel:{}".format(code)]
 
+    def no_dial(self, code):
+        return self.shell + ["service", "call", "phone", "1", "s16", "{}".format(code)]
+
     def enter_key(self, code=None):
         if code is None:
             code = '66'
@@ -473,9 +476,11 @@ if __name__ == "__main__":
         print("going back to home")
         homescreen(dev)
 
+        ###
+
         ###    ##3282# -> View -> MMSC -> URL, Proxy, Proxy Port   ###
         print("##3282# -> View -> MMSC -> URL, Proxy, Proxy Port")
-        dev.dial("##3282#")
+        ask(dev.dial("##3282#"))
         time.sleep(0.5)
         ask(dev.screenshot("MMSC_view.png"))
         ask(dev.download("MMSC_view.png"))
@@ -527,7 +532,7 @@ if __name__ == "__main__":
 
         ###    ##DIAG# & MSL entry   ###
         print("###  ##DIAG# & MSL entry")
-        dev.dial("##3424#")
+        ask(dev.dial("##3424#"))
         time.sleep(0.5)
         ask(dev.screenshot("DIAG_view.png"))
         ask(dev.download("DIAG_view.png"))
@@ -543,13 +548,15 @@ if __name__ == "__main__":
 
         ###   Call Intercept  dial 1 for Voicemail? ###
         homescreen(dev)
-        dev.dial("1")
+        ask(dev.dial("1"))
         time.sleep(0.4)
         ask(dev.screenshot("voicemail.png"))
         ask(dev.download("voicemail.png"))
         time.sleep(2)
         ask(dev.screenshot("voicemail2.png"))
         ask(dev.download("voicemail2.png"))
+        ask(dev.hangup)
+
 
         print("############ Finished ###################")
         print("#####    {}    ########".format(dev.device))
