@@ -21,15 +21,7 @@ Play Store - OEM Logo (No logo whne Wholesale and inactive)
 Gallery
 
 http://adbshell.com/commands
-http://sprintdd.com/android/chameleon/
 
-# adb shell input keyevent --longpress KEYCODE_L
-
-perhaps we can do some things a little differently.
-
-take screenshot, download, analyze
-
-analysis con
 """
 
 import subprocess
@@ -63,10 +55,10 @@ class Adb(object):
         self.back = self.keyevent + ["KEYCODE_BACK"]
         self.home = self.keyevent + ["KEYCODE_HOME"]
         self.hangup = self.keyevent + ["KEYCODE_ENDCALL"]
-        self.lb_data = ask(self.keyevent + ["KEYCODE_POUND", "KEYCODE_POUND", "KEYCODE_3",
-                                            "KEYCODE_2", "KEYCODE_8", "KEYCODE_2", "KEYCODE_POUND"])
-        self.lb_diag = ask(self.keyevent + ["KEYCODE_POUND", "KEYCODE_POUND", "KEYCODE_3",
-                                            "KEYCODE_4", "KEYCODE_2", "KEYCODE_4", "KEYCODE_POUND"])
+        self.lb_data = self.keyevent + ["KEYCODE_POUND", "KEYCODE_POUND", "KEYCODE_3", "KEYCODE_2",
+                                        "KEYCODE_8", "KEYCODE_2", "KEYCODE_POUND"]
+        self.lb_diag = self.keyevent + ["KEYCODE_POUND", "KEYCODE_POUND", "KEYCODE_3", "KEYCODE_4",
+                                        "KEYCODE_2", "KEYCODE_4", "KEYCODE_POUND"]
         self.getprop = self.shell + ["getprop"]
         self.mfgr = self.getprop + ["ro.product.manufacturer"]
         self.uri = self.shell + ['content', 'query' ' --uri', '\"content://settings/system/\"']
@@ -489,7 +481,7 @@ if __name__ == "__main__":
         ###    ##3282# -> View -> MMSC -> URL, Proxy, Proxy Port   ###
         print("##3282# -> View -> MMSC -> URL, Proxy, Proxy Port")
         ask(dev.dialpad)
-        time.sleep(0.5)
+        time.sleep(0.6)
         print("keying in ##DATA#")
         ask(dev.lb_data)
         time.sleep(0.9)
