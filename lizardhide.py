@@ -305,6 +305,7 @@ if __name__ == "__main__":
 
         print("## Contacts ##")
         homescreen(dev)
+        print("looking for 'Messages'")
         x, y = examine_screen(dev, "Messages", photo="homescreen.png")
         if (x is None) or (y is None):
             print("!!! device {} is lacking a 'Messages' button! breaking !!!")
@@ -329,39 +330,59 @@ if __name__ == "__main__":
         print("playstore for {} {}".format(dev.alpha, dev.device))
         screen_fn = dev.pc_pics("homescreen.png")
         print(screen_fn)
-        icon_fn = os.path.join(dev.icon_dir, 'playstore_tiny.png')
         homescreen(dev)
-        x, y = iconograph(screen_fn, icon_fn)
+        x, y = examine_screen(dev, "Play", photo="homescreen.png")
         ask(dev.tap(x, y))
+        print("waiting for playstore icon press...")
+        time.sleep(3)
         ask(dev.screenshot("googly.png"))
         ask(dev.download("googly.png"))
         time.sleep(0.5)
 
+        print("looking for accept, as if acct already active")
         x, y = examine_screen(dev, "ACCEPT", photo="googly.png")
         if x is not None:
             ask(dev.tap(x, y))
         else:
             print("No ACCEPT found")
+
         ask(dev.screenshot("accept.png"))
         ask(dev.download("accept.png"))
 
+        print("looking for email blank")
         x, y = examine_screen(dev, "Email", photo="accept.png")
         if x is not None:
             print("entering email: {}".format(email))
             ask(dev.tap(x, y))
             ask(dev.text(email))
             ask(dev.enter_key())
-        else:
-            ask(dev.screenshot("appstore.png"))
-            ask(dev.download("appstore.png"))
+            print("waiting for password screen")
+            time.sleep(1)
+            # password entry
+            ask(dev.screenshot("password.png"))
+            ask(dev.download("password.png"))
+            x, y = examine_screen(dev, "Password", photo="password.png")
+            if x is not None:
+                print("entering password")
+                ask(dev.tap(x, y))
+                ask(dev.text(password))
+                ask(dev.enter_key())
+                time.sleep(2)
+            else:
+                print("No password blank found")
+            print("pressing ACCEPT to go on to store")
+            ask(dev.screenshot("pass_accept.png"))
+            ask(dev.download("pass_accept.png"))
+            x, y = examine_screen(dev, "ACCEPT", photo="pass_accept.png", DEBUG=True)
+            if x is not None:
+                print("tapping 'ACCEPT'")
+                ask(dev.tap(x, y))
+            else:
+                print("No 'ACCEPT' button after password entry!")
 
-        ask(dev.screenshot("password.png"))
-        ask(dev.download("password.png"))
-        x, y = examine_screen(dev, "Password", photo="password.png")
-        ask(dev.tap(x, y))
-        ask(dev.text(password))
-        ask(dev.enter_key())
-
+        print("#### DID THE STORE APPEAR? ####")
+        print("waiting for appstore to appear")
+        time.sleep(3)
         ask(dev.screenshot("appstore.png"))
         ask(dev.download("appstore.png"))
 
@@ -401,52 +422,61 @@ if __name__ == "__main__":
         time.sleep(2)
         ask(dev.screenshot("legal_info.png"))
         ask(dev.download("legal_info.png"))
-        x, y = examine_screen(dev, "Legal information", photo="legal_info.png", DEBUG=True)
+        x, y = examine_screen(dev, "Legal", photo="legal_info.png", DEBUG=True)
         if x is not None:
+            print("tapping Legal")
             ask(dev.tap(x, y))
-            time.sleep(0.2)
+            time.sleep(1)
         else:
             print("Legal information not found!!!")
 
         print("--privacy--")
         ask(dev.screenshot("privacy.png"))
         ask(dev.download("privacy.png"))
-        x, y = examine_screen(dev, "privacy", photo="privacy.png")
+        x, y = examine_screen(dev, "Privacy", photo="privacy.png", DEBUG=True)
         if x is not None:
             ask(dev.tap(x, y))
-            time.sleep(0.2)
+            time.sleep(1)
         else:
-            print("Privacy Alert not found!!!!")
+            print("Privacy Alert not found!!!! stopping!")
+            exit(1)
 
         ask(dev.screenshot("privacy_proceed.png"))
         ask(dev.download("privacy_proceed.png"))
-        x, y = examine_screen(dev, "proceed", photo="privacy_proceed.png")
+        x, y = examine_screen(dev, "proceed", photo="privacy_proceed.png", DEBUG=True)
         if x is not None:
+            print("tapping Proceed")
             ask(dev.tap(x, y))
+            time.sleep(0.5)
         else:
             print("privacy 'PROCEED' not found!!!")
 
+        print("taking privacy alert screenshot1")
         ask(dev.screenshot("privacy_alert_p1.png"))
         ask(dev.download("privacy_alert_p1.png"))
         ask(dev.swipe(0.5, 0.8, 0.5, 0.1))
+        time.sleep(0.5)
+        print("taking privacy alert screenshot2")
         ask(dev.screenshot("privacy_alert_p2.png"))
         ask(dev.download("privacy_alert_p2.png"))
-        x, y = examine_screen(dev, "OK", photo="privacy_alert_p2.png")
+        x, y = examine_screen(dev, "OK", photo="privacy_alert_p2.png", DEBUG=True)
         if x is not None:
+            print("tapping 'OK' on privacy alert")
             ask(dev.tap(x, y))
         else:
             print("couldn't find 'OK' on legal privacy screen!!!")
 
+        print("going back to home")
         homescreen(dev)
 
-    print(" ###   Call Intercepts ###")
-    # run ADCs and call-intercepts
-    if dev.gen and (not dev.finished):
-        current_wait = time.time() - dev.time_on
-        if current_wait > dev.delay:
-            print("tearing down {} cmd: {}"
-                    .format(dev.device, dev.current_code))
-            ask(dev.screenshot(dev.current_code))
-            ask(dev.download(dev.current_code))
-            ask(dev.hangup())
-            dev.time_on = 0
+        print(" ###   Call Intercepts ###")
+        # run ADCs and call-intercepts
+        if dev.gen and (not dev.finished):
+            current_wait = time.time() - dev.time_on
+            if current_wait > dev.delay:
+                print("tearing down {} cmd: {}"
+                        .format(dev.device, dev.current_code))
+                ask(dev.screenshot(dev.current_code))
+                ask(dev.download(dev.current_code))
+                ask(dev.hangup())
+                dev.time_on = 0
