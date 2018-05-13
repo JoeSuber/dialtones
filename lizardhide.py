@@ -332,57 +332,71 @@ if __name__ == "__main__":
         print(screen_fn)
         homescreen(dev)
         x, y = examine_screen(dev, "Play", photo="homescreen.png")
-        ask(dev.tap(x, y))
-        print("waiting for playstore icon press...")
-        time.sleep(3)
-        ask(dev.screenshot("googly.png"))
-        ask(dev.download("googly.png"))
-        time.sleep(0.5)
+        if x is not None:
+            ask(dev.tap(x, y))
+            print("waiting for playstore icon press...")
+            time.sleep(2)
+            ask(dev.screenshot("google_app_store.png"))
+            ask(dev.download("google_app_store.png"))
+            time.sleep(0.5)
+        else:
+            print("No Play Store button found! stopping!")
+            exit(1)
 
-        print("looking for accept, as if acct already active")
-        x, y = examine_screen(dev, "ACCEPT", photo="googly.png")
+        print("looking for APPS, as if acct already active")
+        x, y = examine_screen(dev, "APPS", photo="google_app_store.png")
         if x is not None:
             ask(dev.tap(x, y))
         else:
-            print("No ACCEPT found")
+            print("No APPS found")
+            print("signing in using email and pass")
+            ask(dev.screenshot("accept.png"))
+            ask(dev.download("accept.png"))
 
-        ask(dev.screenshot("accept.png"))
-        ask(dev.download("accept.png"))
-
-        print("looking for email blank")
-        x, y = examine_screen(dev, "Email", photo="accept.png")
-        if x is not None:
-            print("entering email: {}".format(email))
-            ask(dev.tap(x, y))
-            ask(dev.text(email))
-            ask(dev.enter_key())
-            print("waiting for password screen")
-            time.sleep(1)
-            # password entry
-            ask(dev.screenshot("password.png"))
-            ask(dev.download("password.png"))
-            x, y = examine_screen(dev, "Password", photo="password.png")
+            print("looking for email blank")
+            x, y = examine_screen(dev, "Email", photo="accept.png")
             if x is not None:
-                print("entering password")
+                print("entering email: {}".format(email))
                 ask(dev.tap(x, y))
-                ask(dev.text(password))
+                ask(dev.text(email))
                 ask(dev.enter_key())
-                time.sleep(2)
-            else:
-                print("No password blank found")
-            print("pressing ACCEPT to go on to store")
-            ask(dev.screenshot("pass_accept.png"))
-            ask(dev.download("pass_accept.png"))
-            x, y = examine_screen(dev, "ACCEPT", photo="pass_accept.png", DEBUG=True)
-            if x is not None:
-                print("tapping 'ACCEPT'")
-                ask(dev.tap(x, y))
-            else:
-                print("No 'ACCEPT' button after password entry!")
+                print("waiting for password screen")
+                time.sleep(1)
+                # password entry
+                ask(dev.screenshot("password.png"))
+                ask(dev.download("password.png"))
+                x, y = examine_screen(dev, "Password", photo="password.png")
+                if x is not None:
+                    print("entering password")
+                    ask(dev.tap(x, y))
+                    ask(dev.text(password))
+                    ask(dev.enter_key())
+                    time.sleep(2)
+                else:
+                    print("No password blank found")
+                print("looking for ACCEPT to go on to store")
+                ask(dev.screenshot("pass_accept.png"))
+                ask(dev.download("pass_accept.png"))
+                x, y = examine_screen(dev, "ACCEPT", photo="pass_accept.png", DEBUG=True)
+                if x is not None:
+                    print("tapping 'ACCEPT'")
+                    ask(dev.tap(x, y))
+                    time.sleep(3)
+                else:
+                    print("No 'ACCEPT' button after password entry!")
+                print("looking for NEXT to go on to store")
+                ask(dev.screenshot("pass_next.png"))
+                ask(dev.download("pass_next.png"))
+                x, y = examine_screen(dev, "NEXT", photo="pass_nextaccept.png", DEBUG=True)
+                if x is not None:
+                    print("tapping 'NEXT'")
+                    ask(dev.tap(x, y))
+                    time.sleep(2)
+                else:
+                    print("No 'NEXT' button after password entry!")
 
-        print("#### DID THE STORE APPEAR? ####")
         print("waiting for appstore to appear")
-        time.sleep(3)
+        time.sleep(2)
         ask(dev.screenshot("appstore.png"))
         ask(dev.download("appstore.png"))
 
@@ -443,7 +457,7 @@ if __name__ == "__main__":
 
         ask(dev.screenshot("privacy_proceed.png"))
         ask(dev.download("privacy_proceed.png"))
-        x, y = examine_screen(dev, "proceed", photo="privacy_proceed.png", DEBUG=True)
+        x, y = examine_screen(dev, "PROCEED", photo="privacy_proceed.png", DEBUG=True)
         if x is not None:
             print("tapping Proceed")
             ask(dev.tap(x, y))
@@ -459,6 +473,7 @@ if __name__ == "__main__":
         print("taking privacy alert screenshot2")
         ask(dev.screenshot("privacy_alert_p2.png"))
         ask(dev.download("privacy_alert_p2.png"))
+        time.sleep(0.5)
         x, y = examine_screen(dev, "OK", photo="privacy_alert_p2.png", DEBUG=True)
         if x is not None:
             print("tapping 'OK' on privacy alert")
