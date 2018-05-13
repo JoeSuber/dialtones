@@ -63,6 +63,10 @@ class Adb(object):
         self.back = self.keyevent + ["KEYCODE_BACK"]
         self.home = self.keyevent + ["KEYCODE_HOME"]
         self.hangup = self.keyevent + ["KEYCODE_ENDCALL"]
+        self.lb_data = ask(self.keyevent + ["KEYCODE_POUND", "KEYCODE_POUND", "KEYCODE_3",
+                                            "KEYCODE_2", "KEYCODE_8", "KEYCODE_2", "KEYCODE_POUND"])
+        self.lb_diag = ask(self.keyevent + ["KEYCODE_POUND", "KEYCODE_POUND", "KEYCODE_3",
+                                            "KEYCODE_4", "KEYCODE_2", "KEYCODE_4", "KEYCODE_POUND"])
         self.getprop = self.shell + ["getprop"]
         self.mfgr = self.getprop + ["ro.product.manufacturer"]
         self.uri = self.shell + ['content', 'query' ' --uri', '\"content://settings/system/\"']
@@ -79,6 +83,7 @@ class Adb(object):
         self.finished = False
         self.outputdir = os.path.join(os.getcwd(), "pics")
         self.icon_dir = os.path.join(os.getcwd(), "icons")
+        self.dialpad = self.shell + ["am", "start", "-a", "android.intent.action.DIAL"]
         if not os.path.exists(self.outputdir):
             os.mkdir(self.outputdir)
         if not os.path.exists(self.icon_dir):
@@ -86,13 +91,17 @@ class Adb(object):
         print("Screenshot storage: {}".format(self.outputdir))
         print("Icon storage: {}".format(self.icon_dir))
 
-    def swipe(self, x1, y1, x2, y2):
+    def swipe(self, x1, y1, x2, y2, delay=None):
         """ inputs are ratios from zero to 1 of max screen dimension """
+        if delay is None:
+            delay = ""
+        else:
+            delay = str(int(delay))
         xa = str(int(self.x_max * x1))
         ya = str(int(self.y_max * y1))
         xb = str(int(self.x_max * x2))
         yb = str(int(self.y_max * y2))
-        return self.swipe_front + [xa, ya, xb, yb]
+        return self.swipe_front + [xa, ya, xb, yb, delay]
 
     def tap(self, x, y):
         """ x and y are screen coordinate integers """
@@ -272,9 +281,9 @@ if __name__ == "__main__":
         ask(dev.screenshot("lockscreen.png"))
         ask(dev.download("lockscreen.png"))
 
+        print("homescreen {} {}".format(dev.alpha, dev.device))
         homescreen(dev)
         ask(dev.swipe(0.2, 0.8, 0.9, 0.8))
-        print("homescreen {} {}".format(dev.alpha, dev.device))
         ask(dev.screenshot("homescreen.png"))
         ask(dev.download("homescreen.png"))
 
@@ -476,15 +485,18 @@ if __name__ == "__main__":
         print("going back to home")
         homescreen(dev)
 
-        ###
 
         ###    ##3282# -> View -> MMSC -> URL, Proxy, Proxy Port   ###
         print("##3282# -> View -> MMSC -> URL, Proxy, Proxy Port")
-        ask(dev.dial("##3282#"))
+        ask(dev.dialpad)
         time.sleep(0.5)
+        print("keying in ##DATA#")
+        ask(dev.lb_data)
+        time.sleep(0.9)
         ask(dev.screenshot("MMSC_view.png"))
         ask(dev.download("MMSC_view.png"))
         time.sleep(0.5)
+        print("looking for MMSC-View")
         x, y = examine_screen(dev, "View", photo="MMSC_view.png", DEBUG=True)
         if x is not None:
             print("tapping MMSC-View")
@@ -510,6 +522,9 @@ if __name__ == "__main__":
         lowx, lowy = examine_screen(dev, "Port", photo="MMSC_info.png", DEBUG=True)
         midx = int((lowx + highx) / 2)
         midy = int((lowy + highy / 2))
+        print("highy = {}, midy = {}, lowy = {}".format(highy, midy, lowy))
+        if not all([highy, midy, lowy]):
+            print("WARNING NOT ALL 3 MMSC MENU SPOTS FOUND")
         print("taking screen shots of MMSC menu items")
         ask(dev.tap(highx, highy))
         time.sleep(0.5)
@@ -532,8 +547,10 @@ if __name__ == "__main__":
 
         ###    ##DIAG# & MSL entry   ###
         print("###  ##DIAG# & MSL entry")
-        ask(dev.dial("##3424#"))
+        ask(dev.dialpad)
         time.sleep(0.5)
+        ask(dev.lb_diag)
+        time.sleep(0.9)
         ask(dev.screenshot("DIAG_view.png"))
         ask(dev.download("DIAG_view.png"))
         time.sleep(0.5)
@@ -548,13 +565,21 @@ if __name__ == "__main__":
 
         ###   Call Intercept  dial 1 for Voicemail? ###
         homescreen(dev)
-        ask(dev.dial("1"))
-        time.sleep(0.4)
+        ask(dev.dialpad)
+        time.sleep(0.7)
+        ask(dev.screenshot("dialpad.png"))
+        ask(dev.download("dialpad.png"))
+        print("looking for numeral '1'")
+        x, y = examine_screen(dev, "1", photo="dialpad.png", DEBUG=True)
+        if x is not None:
+            print("pressing and holding '1' for voicemail.")
+            ask(dev.swipe(x, y, x+1, y+1, delay=2000))
+        else:
+            print("numeral '1' not found on dialpad!")
+        time.sleep(2)
+        print("taking screenshots of voicemail call inprogress")
         ask(dev.screenshot("voicemail.png"))
         ask(dev.download("voicemail.png"))
-        time.sleep(2)
-        ask(dev.screenshot("voicemail2.png"))
-        ask(dev.download("voicemail2.png"))
         ask(dev.hangup)
 
 
