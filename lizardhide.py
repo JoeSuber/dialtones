@@ -282,7 +282,7 @@ if __name__ == "__main__":
         ask(dev.screenshot("notificationtray.png"))
         ask(dev.download("notificationtray.png"))
 
-        # app tray
+        ###   app tray   ###
         print("App Tray for {} {}".format(dev.alpha, dev.device))
         screen_fn = dev.pc_pics("homescreen.png")
         homescreen(dev)
@@ -303,6 +303,7 @@ if __name__ == "__main__":
             ask(dev.swipe(0.1, 0.8, 0.9, 0.8))
 
 
+        ###   CONTACTS   ###
         print("## Contacts ##")
         homescreen(dev)
         print("looking for 'Messages'")
@@ -323,15 +324,12 @@ if __name__ == "__main__":
         ask(dev.screenshot("Contacts.png"))
         ask(dev.download("Contacts.png"))
         time.sleep(1)
-        homescreen(dev)
 
-        # playstore
+        ###   playstore   ###
+        homescreen(dev)
         print("## Playstore ##")
         print("playstore for {} {}".format(dev.alpha, dev.device))
-        screen_fn = dev.pc_pics("homescreen.png")
-        print(screen_fn)
-        homescreen(dev)
-        x, y = examine_screen(dev, "Play", photo="homescreen.png")
+        x, y = examine_screen(dev, "Play", photo="homescreen.png", DEBUG=True)
         if x is not None:
             ask(dev.tap(x, y))
             print("waiting for playstore icon press...")
@@ -342,7 +340,6 @@ if __name__ == "__main__":
         else:
             print("No Play Store button found! stopping!")
             exit(1)
-
         print("looking for APPS, as if acct already active")
         x, y = examine_screen(dev, "APPS", photo="google_app_store.png")
         if x is not None:
@@ -352,7 +349,6 @@ if __name__ == "__main__":
             print("signing in using email and pass")
             ask(dev.screenshot("accept.png"))
             ask(dev.download("accept.png"))
-
             print("looking for email blank")
             x, y = examine_screen(dev, "Email", photo="accept.png")
             if x is not None:
@@ -394,13 +390,12 @@ if __name__ == "__main__":
                     time.sleep(2)
                 else:
                     print("No 'NEXT' button after password entry!")
-
         print("waiting for appstore to appear")
         time.sleep(2)
         ask(dev.screenshot("appstore.png"))
         ask(dev.download("appstore.png"))
 
-        ### Legal Info Screens ###
+        ###  Legal Info Screens  ###
         print("## Legal Info ##")
         print("Legal info for {} {}".format(dev.alpha, dev.device))
         homescreen(dev)
@@ -424,14 +419,12 @@ if __name__ == "__main__":
             ask(dev.screenshot("about_device.png"))
             ask(dev.download("about_device.png"))
             x, y = examine_screen(dev, "About", photo="about_device.png")
-
         print("'About device' at: {}, {}".format(x,y))
         if x is not None:
             print("tapping {}, {}".format(x, y))
             ask(dev.tap(x, y))
         else:
             print("About Device not found!!!!")
-
         print("---waiting for legal info tap to materialize----")
         time.sleep(2)
         ask(dev.screenshot("legal_info.png"))
@@ -443,7 +436,6 @@ if __name__ == "__main__":
             time.sleep(1)
         else:
             print("Legal information not found!!!")
-
         print("--privacy--")
         ask(dev.screenshot("privacy.png"))
         ask(dev.download("privacy.png"))
@@ -454,7 +446,6 @@ if __name__ == "__main__":
         else:
             print("Privacy Alert not found!!!! stopping!")
             exit(1)
-
         ask(dev.screenshot("privacy_proceed.png"))
         ask(dev.download("privacy_proceed.png"))
         x, y = examine_screen(dev, "PROCEED", photo="privacy_proceed.png", DEBUG=True)
@@ -464,7 +455,6 @@ if __name__ == "__main__":
             time.sleep(0.5)
         else:
             print("privacy 'PROCEED' not found!!!")
-
         print("taking privacy alert screenshot1")
         ask(dev.screenshot("privacy_alert_p1.png"))
         ask(dev.download("privacy_alert_p1.png"))
@@ -480,18 +470,89 @@ if __name__ == "__main__":
             ask(dev.tap(x, y))
         else:
             print("couldn't find 'OK' on legal privacy screen!!!")
-
         print("going back to home")
         homescreen(dev)
 
-        print(" ###   Call Intercepts ###")
-        # run ADCs and call-intercepts
-        if dev.gen and (not dev.finished):
-            current_wait = time.time() - dev.time_on
-            if current_wait > dev.delay:
-                print("tearing down {} cmd: {}"
-                        .format(dev.device, dev.current_code))
-                ask(dev.screenshot(dev.current_code))
-                ask(dev.download(dev.current_code))
-                ask(dev.hangup())
-                dev.time_on = 0
+        ###    ##3282# -> View -> MMSC -> URL, Proxy, Proxy Port   ###
+        print("##3282# -> View -> MMSC -> URL, Proxy, Proxy Port")
+        dev.dial("##3282#")
+        time.sleep(0.5)
+        ask(dev.screenshot("MMSC_view.png"))
+        ask(dev.download("MMSC_view.png"))
+        time.sleep(0.5)
+        x, y = examine_screen(dev, "View", photo="MMSC_view.png", DEBUG=True)
+        if x is not None:
+            print("tapping MMSC-View")
+            ask(dev.tap(x,y))
+        else:
+            print("NO MMSC-View!")
+        time.sleep(0.5)
+        ask(dev.screenshot("MMSC_mmsc.png"))
+        ask(dev.download("MMSC_mmsc.png"))
+        time.sleep(0.5)
+        x, y = examine_screen(dev, "MMSC", photo="MMSC_mmsc.png", DEBUG=True)
+        if x is not None:
+            print("tapping MMSC")
+            ask(dev.tap(x,y))
+        else:
+            print("NO 'MMSC' found")
+        time.sleep(0.5)
+        ask(dev.screenshot("MMSC_info.png"))
+        ask(dev.download("MMSC_info.png"))
+        time.sleep(0.5)
+        print("looking for MMSC final menu items")
+        highx, highy = examine_screen(dev, "URL", photo="MMSC_info.png", DEBUG=True)
+        lowx, lowy = examine_screen(dev, "Port", photo="MMSC_info.png", DEBUG=True)
+        midx = int((lowx + highx) / 2)
+        midy = int((lowy + highy / 2))
+        print("taking screen shots of MMSC menu items")
+        ask(dev.tap(highx, highy))
+        time.sleep(0.5)
+        ask(dev.screenshot("MMSC_url.png"))
+        ask(dev.download("MMSC_url.png"))
+        ask(dev.back)
+        time.sleep(0.5)
+        ask(dev.tap(midx, midy))
+        time.sleep(0.5)
+        ask(dev.screenshot("MMSC_proxygateway.png"))
+        ask(dev.download("MMSC_proxygateway.png"))
+        ask(dev.back)
+        time.sleep(0.5)
+        ask(dev.tap(lowx, lowy))
+        time.sleep(0.5)
+        ask(dev.screenshot("MMSC_proxyport.png"))
+        ask(dev.download("MMSC_proxyport.png"))
+        homescreen(dev)
+        print("MMSC items DONE!")
+
+        ###    ##DIAG# & MSL entry   ###
+        print("###  ##DIAG# & MSL entry")
+        dev.dial("##3424#")
+        time.sleep(0.5)
+        ask(dev.screenshot("DIAG_view.png"))
+        ask(dev.download("DIAG_view.png"))
+        time.sleep(0.5)
+        #x, y = examine_screen(dev, "MSL", photo="DIAG_view.png", DEBUG=True)
+        print("entering MSL {}".format(dev.msl))
+        ask(dev.text("{}".format(dev.msl)))
+        ask(dev.enter_key())
+        time.sleep(0.5)
+        ask(dev.screenshot("DIAG_msl.png"))
+        ask(dev.download("DIAG_msl.png"))
+        time.sleep(0.5)
+
+        ###   Call Intercept  dial 1 for Voicemail? ###
+        homescreen(dev)
+        dev.dial("1")
+        time.sleep(0.4)
+        ask(dev.screenshot("voicemail.png"))
+        ask(dev.download("voicemail.png"))
+        time.sleep(2)
+        ask(dev.screenshot("voicemail2.png"))
+        ask(dev.download("voicemail2.png"))
+
+        print("############ Finished ###################")
+        print("#####    {}    ########".format(dev.device))
+        print("#########################################")
+
+
