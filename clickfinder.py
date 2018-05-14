@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
 
-
+""" utility for translating clicks and swipes on an image into coordinates returned as ratios """
 def draw_circle(event, x, y, flags, param):
     height, width = fullsize.shape[:2]
+    #print("original = {}, {}".format(height, width))
     smallheight, smallwidth = img.shape[:2]
     ratx = np.round(int(x * width / smallwidth) / float(width), 3)
     raty = np.round(int(y * height / smallheight) / float(height), 3)
@@ -29,5 +30,5 @@ def clickfinder(screen_fn):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    sample = "C:\\Users\\2053_HSUF\\PycharmProjects\\dialtones\\pics\\43d2ce46_samsung_Sprint-Prepaid_lockscreen.png"
+    sample = "C:\\Users\\2053_HSUF\\PycharmProjects\\dialtones\\pics\\43d2ce46_samsung_Sprint-Prepaid_DIAG_view.png"
     clickfinder(sample)

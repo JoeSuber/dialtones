@@ -59,6 +59,7 @@ class Adb(object):
                                         "KEYCODE_8", "KEYCODE_2", "KEYCODE_POUND"]
         self.lb_diag = self.keyevent + ["KEYCODE_POUND", "KEYCODE_POUND", "KEYCODE_3", "KEYCODE_4",
                                         "KEYCODE_2", "KEYCODE_4", "KEYCODE_POUND"]
+        self.dialpad = self.shell + ["am", "start", "-a", "android.intent.action.DIAL"]
         self.getprop = self.shell + ["getprop"]
         self.mfgr = self.getprop + ["ro.product.manufacturer"]
         self.uri = self.shell + ['content', 'query' ' --uri', '\"content://settings/system/\"']
@@ -75,7 +76,6 @@ class Adb(object):
         self.finished = False
         self.outputdir = os.path.join(os.getcwd(), "pics")
         self.icon_dir = os.path.join(os.getcwd(), "icons")
-        self.dialpad = self.shell + ["am", "start", "-a", "android.intent.action.DIAL"]
         if not os.path.exists(self.outputdir):
             os.mkdir(self.outputdir)
         if not os.path.exists(self.icon_dir):
@@ -484,7 +484,7 @@ if __name__ == "__main__":
         time.sleep(0.6)
         print("keying in ##DATA#")
         ask(dev.lb_data)
-        time.sleep(0.9)
+        time.sleep(0.5)
         ask(dev.screenshot("MMSC_view.png"))
         ask(dev.download("MMSC_view.png"))
         time.sleep(0.5)
@@ -494,17 +494,31 @@ if __name__ == "__main__":
             print("tapping MMSC-View")
             ask(dev.tap(x,y))
         else:
-            print("NO MMSC-View!")
+            print("NO MMSC-View! exiting")
+            exit(1)
         time.sleep(0.5)
+        print("taking mmsc screenshot")
         ask(dev.screenshot("MMSC_mmsc.png"))
         ask(dev.download("MMSC_mmsc.png"))
         time.sleep(0.5)
-        x, y = examine_screen(dev, "MMSC", photo="MMSC_mmsc.png", DEBUG=True)
+        x, y = examine_screen(dev, "MSL", photo="MMSC_mmsc.png", DEBUG=True)
+        #if x is not None:
+        #    print("entering MSL {}".format(dev.msl))
+        #    ask(dev.text("{}".format(dev.msl)))
+        #    ask(dev.tap(167, 358))
+        #    time.sleep(0.6)
+        #else:
+        #   print("'MSL' not found, maybe no MSL entry opportunity?")
+        ask(dev.screenshot("MMSC_mmsc2.png"))
+        ask(dev.download("MMSC_mmsc2.png"))
+        print("looking for 'MMSC'")
+        x, y = examine_screen(dev, "MMSC", photo="MMSC_mmsc2.png", DEBUG=True)
         if x is not None:
             print("tapping MMSC")
             ask(dev.tap(x,y))
         else:
-            print("NO 'MMSC' found")
+            print("NO 'MMSC' found, exiting")
+            exit(1)
         time.sleep(0.5)
         ask(dev.screenshot("MMSC_info.png"))
         ask(dev.download("MMSC_info.png"))
@@ -512,11 +526,13 @@ if __name__ == "__main__":
         print("looking for MMSC final menu items")
         highx, highy = examine_screen(dev, "URL", photo="MMSC_info.png", DEBUG=True)
         lowx, lowy = examine_screen(dev, "Port", photo="MMSC_info.png", DEBUG=True)
-        midx = int((lowx + highx) / 2)
-        midy = int((lowy + highy / 2))
+        if not all([highy, lowy]):
+            print("WARNING NOT ALL MMSC MENU SPOTS FOUND")
+            midx, midy = 40, None
+        else:
+            midx = int((lowx + highx) / 2)
+            midy = int((lowy + highy) / 2)
         print("highy = {}, midy = {}, lowy = {}".format(highy, midy, lowy))
-        if not all([highy, midy, lowy]):
-            print("WARNING NOT ALL 3 MMSC MENU SPOTS FOUND")
         print("taking screen shots of MMSC menu items")
         ask(dev.tap(highx, highy))
         time.sleep(0.5)
@@ -534,7 +550,12 @@ if __name__ == "__main__":
         time.sleep(0.5)
         ask(dev.screenshot("MMSC_proxyport.png"))
         ask(dev.download("MMSC_proxyport.png"))
+        ask(dev.back)
+        ask(dev.back)
+        ask(dev.back)
+        ask(dev.back)
         homescreen(dev)
+        time.sleep(1)
         print("MMSC items DONE!")
 
         ###    ##DIAG# & MSL entry   ###
@@ -546,28 +567,23 @@ if __name__ == "__main__":
         ask(dev.screenshot("DIAG_view.png"))
         ask(dev.download("DIAG_view.png"))
         time.sleep(0.5)
-        #x, y = examine_screen(dev, "MSL", photo="DIAG_view.png", DEBUG=True)
+        x, y = 167, 358 ## hack for 'OK'
         print("entering MSL {}".format(dev.msl))
         ask(dev.text("{}".format(dev.msl)))
-        ask(dev.enter_key())
-        time.sleep(0.5)
+        ask(dev.tap(x,y))
+        time.sleep(0.9)
         ask(dev.screenshot("DIAG_msl.png"))
         ask(dev.download("DIAG_msl.png"))
         time.sleep(0.5)
 
         ###   Call Intercept  dial 1 for Voicemail? ###
+        print("###   call intercept, voicemail #### ")
         homescreen(dev)
         ask(dev.dialpad)
         time.sleep(0.7)
         ask(dev.screenshot("dialpad.png"))
         ask(dev.download("dialpad.png"))
-        print("looking for numeral '1'")
-        x, y = examine_screen(dev, "1", photo="dialpad.png", DEBUG=True)
-        if x is not None:
-            print("pressing and holding '1' for voicemail.")
-            ask(dev.swipe(x, y, x+1, y+1, delay=2000))
-        else:
-            print("numeral '1' not found on dialpad!")
+        ask(dev.dial('1'))
         time.sleep(2)
         print("taking screenshots of voicemail call inprogress")
         ask(dev.screenshot("voicemail.png"))
