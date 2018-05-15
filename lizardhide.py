@@ -30,7 +30,7 @@ import os
 from chamcodes import dial_codes, carriers
 from psycon import iconograph
 from blobs import scry
-
+import cv2
 
 def ask(cmd_str):
     """ run an adb command string, return the terminal text output as a list of lines"""
@@ -59,6 +59,7 @@ class Adb(object):
                                         "KEYCODE_8", "KEYCODE_2", "KEYCODE_POUND"]
         self.lb_diag = self.keyevent + ["KEYCODE_POUND", "KEYCODE_POUND", "KEYCODE_3", "KEYCODE_4",
                                         "KEYCODE_2", "KEYCODE_4", "KEYCODE_POUND"]
+        self.longpress1 = self.keyevent + ["--longpress", "KEYCODE_1", "KEYCODE_1", "KEYCODE_1", "KEYCODE_1", "KEYCODE_1"]
         self.dialpad = self.shell + ["am", "start", "-a", "android.intent.action.DIAL"]
         self.getprop = self.shell + ["getprop"]
         self.mfgr = self.getprop + ["ro.product.manufacturer"]
@@ -361,10 +362,11 @@ if __name__ == "__main__":
                 ask(dev.text(email))
                 ask(dev.enter_key())
                 print("waiting for password screen")
-                time.sleep(1)
+                time.sleep(2.3)
                 # password entry
                 ask(dev.screenshot("password.png"))
                 ask(dev.download("password.png"))
+                print("looking for 'Password'")
                 x, y = examine_screen(dev, "Password", photo="password.png")
                 if x is not None:
                     print("entering password")
@@ -374,6 +376,7 @@ if __name__ == "__main__":
                     time.sleep(2)
                 else:
                     print("No password blank found")
+                    exit(1)
                 print("looking for ACCEPT to go on to store")
                 ask(dev.screenshot("pass_accept.png"))
                 ask(dev.download("pass_accept.png"))
@@ -381,9 +384,17 @@ if __name__ == "__main__":
                 if x is not None:
                     print("tapping 'ACCEPT'")
                     ask(dev.tap(x, y))
-                    time.sleep(3)
+                    time.sleep(3.6)
                 else:
                     print("No 'ACCEPT' button after password entry!")
+                print("looking for Google Services screen")
+                ask(dev.screenshot("google_services.png"))
+                ask(dev.download("google_services.png"))
+                x, y = examine_screen(dev, "Services", photo="pass_accept.png", DEBUG=True)
+                if x is not None:
+                    print("Services found.")
+                    ask(dev.swipe(0.95, 0.95, 0.97, 0.97 ))
+                    time.sleep(1)
                 print("looking for NEXT to go on to store")
                 ask(dev.screenshot("pass_next.png"))
                 ask(dev.download("pass_next.png"))
@@ -399,12 +410,15 @@ if __name__ == "__main__":
         ask(dev.screenshot("appstore.png"))
         ask(dev.download("appstore.png"))
 
-        ###  Legal Info Screens  ###
-        print("## Legal Info ##")
-        print("Legal info for {} {}".format(dev.alpha, dev.device))
+        ###  Hotspot, Tethering, Network, Legal Info Screens  ###
+        print("## Hotspot, Tethering, Network, Legal Info,  ##")
+        print("Hotspot, Tethering Network & Legal info for {} {}".format(dev.alpha, dev.device))
         homescreen(dev)
+        print("swipe down")
         ask(dev.swipe(0.5, 0.01, 0.5, 0.8)) #swipe down the app tray
         icon_fn = os.path.join(dev.icon_dir, 'gear_tiny.png')
+        time.sleep(0.5)
+        print("finding gear icon")
         ask(dev.screenshot("gear.png"))
         ask(dev.download("gear.png"))
         screen_fn = dev.pc_pics("gear.png")
@@ -412,13 +426,42 @@ if __name__ == "__main__":
         time.sleep(2)
         x, y = iconograph(screen_fn, icon_fn, icon_source_size=(720, 1280), DEBUG=False)
         ask(dev.tap(x, y))
+        time.sleep(0.7)
         print("tapped 'gear' at: x={}, y={}".format(x,y))
+        ask(dev.screenshot("gear.png"))
+        ask(dev.download("gear.png"))
+
+        print("looking for 'Connections' on menu")
+        x, y = examine_screen(dev, "Connections", photo="gear.png")
+        if x is not None:
+            ask(dev.tap(x,y))
+            print("tapped 'Connections")
+            time.sleep(0.7)
+            ask(dev.screenshot("Connections.png"))
+            ask(dev.download("Connections.png"))
+            ask(dev.back)
+        else:
+            print("no 'Connections' menu item found ")
+        time.sleep(0.7)
+        print("looking for 'Hotspot' on menu")
+        x, y = examine_screen(dev, "Hotspot", photo="gear.png")
+        if x is not None:
+            ask(dev.tap(x,y))
+            print("tapped 'Hotspot")
+            time.sleep(0.7)
+            ask(dev.screenshot("Hotspot.png"))
+            ask(dev.download("Hotspot.png"))
+            ask(dev.back)
+        else:
+            print("no 'Hotspot' menu item found ")
+
+        print("swipeing down ")
         ask(dev.swipe(0.5, 0.8, 0.5, 0.1))
         ask(dev.screenshot("about_device.png"))
         ask(dev.download("about_device.png"))
         x, y = examine_screen(dev, "About", photo="about_device.png")
         if x is None:
-            print("looking for 'About' below swipe")
+            print("looking for 'About' 2nd time, now below swipe")
             ask(dev.swipe(0.5, 0.1, 0.5, 0.8))
             ask(dev.screenshot("about_device.png"))
             ask(dev.download("about_device.png"))
@@ -435,7 +478,7 @@ if __name__ == "__main__":
         ask(dev.download("legal_info.png"))
         x, y = examine_screen(dev, "Legal", photo="legal_info.png", DEBUG=True)
         if x is not None:
-            print("tapping Legal")
+            print("tapping 'Legal'")
             ask(dev.tap(x, y))
             time.sleep(1)
         else:
@@ -484,7 +527,7 @@ if __name__ == "__main__":
         time.sleep(0.6)
         print("keying in ##DATA#")
         ask(dev.lb_data)
-        time.sleep(0.5)
+        time.sleep(1.6)
         ask(dev.screenshot("MMSC_view.png"))
         ask(dev.download("MMSC_view.png"))
         time.sleep(0.5)
@@ -536,18 +579,21 @@ if __name__ == "__main__":
         print("taking screen shots of MMSC menu items")
         ask(dev.tap(highx, highy))
         time.sleep(0.5)
+        print("url")
         ask(dev.screenshot("MMSC_url.png"))
         ask(dev.download("MMSC_url.png"))
         ask(dev.back)
         time.sleep(0.5)
         ask(dev.tap(midx, midy))
         time.sleep(0.5)
+        print("gateway")
         ask(dev.screenshot("MMSC_proxygateway.png"))
         ask(dev.download("MMSC_proxygateway.png"))
         ask(dev.back)
         time.sleep(0.5)
         ask(dev.tap(lowx, lowy))
         time.sleep(0.5)
+        print("port")
         ask(dev.screenshot("MMSC_proxyport.png"))
         ask(dev.download("MMSC_proxyport.png"))
         ask(dev.back)
@@ -563,7 +609,7 @@ if __name__ == "__main__":
         ask(dev.dialpad)
         time.sleep(0.5)
         ask(dev.lb_diag)
-        time.sleep(0.9)
+        time.sleep(2)
         ask(dev.screenshot("DIAG_view.png"))
         ask(dev.download("DIAG_view.png"))
         time.sleep(0.5)
@@ -583,7 +629,7 @@ if __name__ == "__main__":
         time.sleep(0.7)
         ask(dev.screenshot("dialpad.png"))
         ask(dev.download("dialpad.png"))
-        ask(dev.dial('1'))
+        ask(dev.longpress1)
         time.sleep(2)
         print("taking screenshots of voicemail call inprogress")
         ask(dev.screenshot("voicemail.png"))
@@ -594,5 +640,6 @@ if __name__ == "__main__":
         print("############ Finished ###################")
         print("#####    {}    ########".format(dev.device))
         print("#########################################")
+        exit(1)
 
 
